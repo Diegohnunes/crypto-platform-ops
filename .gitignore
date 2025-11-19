@@ -1,0 +1,16 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# AWS CLI
+awscliv2.zip
+aws/
+
+# Helm
+get_helm.sh
+
+# IDE
+.vscode/
+.idea/

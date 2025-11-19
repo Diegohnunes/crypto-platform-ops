@@ -1,0 +1,41 @@
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+persistence:
+  enabled: false
+adminPassword: "admin"
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-server.monitoring.svc.cluster.local
+      access: proxy
+      isDefault: true
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+    - name: 'default'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      editable: true
+      options:
+        path: /var/lib/grafana/dashboards/default
+dashboards:
+  default:
+    kubernetes-cluster:
+      gnetId: 7249 # Basic Cluster Dashboard
+      revision: 1
+      datasource: Prometheus
+    kubernetes-pods:
+      gnetId: 6417 # Basic Pods Dashboard
+      revision: 1
+      datasource: Prometheus
