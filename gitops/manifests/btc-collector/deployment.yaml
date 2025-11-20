@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: btc-collector
+  namespace: default
+  labels:
+    app: btc-collector
+    coin: BTC
+    type: collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: btc-collector
+  template:
+    metadata:
+      labels:
+        app: btc-collector
+        coin: BTC
+        type: collector
+    spec:
+      containers:
+        - name: btc-collector
+          image: diegohnunes/btc-collector:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: btc-collector-config
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
