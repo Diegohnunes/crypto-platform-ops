@@ -1,9 +1,79 @@
-apiVersion: backstage.io/v1alpha1
-kind: Location
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
 metadata:
-  name: crypto-collector-templates
-  description: Crypto Collector templates for the platform
+  name: crypto-collector-template
+  title: Crypto Collector Service
+  description: Scaffolds a new Crypto Collector microservice in Go
+  tags:
+    - go
+    - crypto
+    - microservice
 spec:
-  type: url
-  targets:
-    - https://raw.githubusercontent.com/Diegohnunes/crypto-platform-ops/main/idp/templates/crypto-collector/template.yaml
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Service Information
+      required:
+        - name
+        - coin
+      properties:
+        name:
+          title: Service Name
+          type: string
+          description: Unique name of the service (e.g., btc-collector)
+          ui:autofocus: true
+        coin:
+          title: Cryptocurrency Symbol
+          type: string
+          description: The symbol of the cryptocurrency to collect (e.g., BTC, ETH)
+          enum:
+            - BTC
+            - ETH
+            - SOL
+            - ADA
+    - title: Repository Location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+  steps:
+    - id: fetch-base
+      name: Fetch Base
+      action: fetch:template
+      input:
+        url: ./content
+        values:
+          name: ${{ parameters.name }}
+          coin: ${{ parameters.coin }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: This is ${{ parameters.name }}
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}
