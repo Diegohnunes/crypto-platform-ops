@@ -1,2 +1,1 @@
-boto3
-psycopg2-binary
+# No dependencies needed for standard library sqlite3
