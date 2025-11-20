@@ -17,7 +17,7 @@ data:
       listen:
         port: 7000
         host: '0.0.0.0'
-      
+
       reading:
         allow:
           - host: github.com
@@ -30,11 +30,11 @@ data:
             protocol: https
           - host: api.github.com
             protocol: https
-          - host: '*'
+          # - host: '*'    # descomente se quiser liberar tudo (menos seguro)
 
       csp:
         connect-src: ["'self'", 'http:', 'https:']
-        
+
       cors:
         origin:
           - http://localhost:7007
@@ -53,6 +53,13 @@ data:
           token: ${GITHUB_TOKEN}
         - host: raw.githubusercontent.com
           token: ${GITHUB_TOKEN}
+
+    auth:
+      providers:
+        github:
+          development:
+            clientId: arbitrary-value
+            clientSecret: arbitrary-value
 
     catalog:
       import:
