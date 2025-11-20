@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/Diegohnunes/crypto-platform-ops.git
     targetRevision: HEAD
-    path: gitops/components/grafana
+    path: gitops/manifests/grafana
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

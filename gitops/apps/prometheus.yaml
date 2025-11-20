@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/Diegohnunes/crypto-platform-ops.git
     targetRevision: HEAD
-    path: gitops/components/prometheus
+    path: gitops/manifests/prometheus
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

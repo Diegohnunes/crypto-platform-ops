@@ -1,7 +1,0 @@
-apiVersion: v2
-name: localstack
-version: 1.0.0
-dependencies:
-  - name: localstack
-    version: 0.6.27
-    repository: https://localstack.github.io/helm-charts
