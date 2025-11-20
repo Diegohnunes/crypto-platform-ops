@@ -7,18 +7,19 @@ data:
   app-config.yaml: |
     app:
       title: CryptoLab IDP
+      # Backup config
       baseUrl: http://localhost:7007
 
     organization:
       name: CryptoLab
 
     backend:
+      # Backup config
       baseUrl: http://localhost:7007
       listen:
         port: 7000
-        host: '0.0.0.0' # CRITICO: Aceita conexões externas ao container
+        host: '0.0.0.0'
       
-      # Permite ler arquivos raw do GitHub
       reading:
         allow:
           - host: '*'
@@ -42,20 +43,11 @@ data:
         - host: raw.githubusercontent.com
           token: ${GITHUB_TOKEN}
 
-    techdocs:
-      builder: 'local'
-      generator:
-        runIn: 'local'
-      publisher:
-        type: 'local'
-
     catalog:
       import:
         entityFilename: catalog-info.yaml
       rules:
         - allow: [Component, System, API, Resource, Location, Template]
-      
-      # AQUI: Deixei APENAS o seu catálogo para parar o erro 404 do sample.yaml
       locations:
         - type: url
           target: https://raw.githubusercontent.com/Diegohnunes/crypto-platform-ops/main/idp/catalog-info.yaml
@@ -83,6 +75,10 @@ spec:
         - containerPort: 7000
           name: http
         env:
+        - name: APP_CONFIG_app_baseUrl
+          value: "http://localhost:7007"
+        - name: APP_CONFIG_backend_baseUrl
+          value: "http://localhost:7007"
         - name: GITHUB_TOKEN
           valueFrom:
             secretKeyRef:
