@@ -15,7 +15,7 @@ data:
     backend:
       baseUrl: http://localhost:7007
       listen:
-        port: 7007
+        port: 7000
       csp:
         connect-src: ["'self'", 'http:', 'https:']
       cors:
