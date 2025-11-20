@@ -109,6 +109,6 @@ spec:
     app: backstage
   ports:
     - port: 7007
-      targetPort: 7007
+      targetPort: 7000
       name: http
   type: ClusterIP
