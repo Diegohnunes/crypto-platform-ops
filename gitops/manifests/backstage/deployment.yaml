@@ -16,6 +16,11 @@ data:
       baseUrl: http://localhost:7007
       listen:
         port: 7007
+      reading:
+        allow:
+          - host: raw.githubusercontent.com
+          - host: github.com
+
       csp:
         connect-src: ["'self'", 'http:', 'https:']
       cors:
@@ -33,19 +38,12 @@ data:
         - host: raw.githubusercontent.com
           token: ${GITHUB_TOKEN}
 
-    proxy: {}
-
     techdocs:
       builder: 'local'
       generator:
         runIn: 'local'
       publisher:
         type: 'local'
-
-    auth:
-      providers: {}
-
-    scaffolder: {}
 
     catalog:
       import:
@@ -55,8 +53,9 @@ data:
       locations:
         - type: url
           target: https://raw.githubusercontent.com/Diegohnunes/crypto-platform-ops/main/idp/catalog-info.yaml
-          rules:
-            - allow: [Template]
+          # CORREÇÃO: Removi a regra "rules: - allow: [Template]" daqui.
+          # Motivo: Se catalog-info.yaml for do tipo "Location" (agrupador),
+          # a regra anterior bloqueava a leitura dele antes mesmo de chegar no Template.
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -85,8 +84,6 @@ spec:
             secretKeyRef:
               name: backstage-github-token
               key: GITHUB_TOKEN
-        - name: PORT
-          value: "7007"
         resources:
           requests:
             cpu: 100m
@@ -114,5 +111,4 @@ spec:
   ports:
     - port: 7007
       targetPort: 7007
-      name: http
   type: ClusterIP
