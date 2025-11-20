@@ -1,4 +1,4 @@
-apiVersion: v1
+apiapiVersion: v1
 kind: ConfigMap
 metadata:
   name: backstage-app-config
@@ -18,14 +18,18 @@ data:
         port: 7000
         host: '0.0.0.0'
       
+      # --- CORREÇÃO DO NotAllowedError ---
+      # É necessário listar explicitamente os domínios permitidos
       reading:
         allow:
-          - host: '*'
+          - host: github.com
+          - host: raw.githubusercontent.com
+          - host: api.github.com
+      # -----------------------------------
 
       csp:
         connect-src: ["'self'", 'http:', 'https:']
         
-      # --- CORREÇÃO DO CORS AQUI ---
       cors:
         origin:
           - http://localhost:7007
@@ -33,7 +37,6 @@ data:
           - http://localhost:3000
         methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
         credentials: true
-      # -----------------------------
 
       database:
         client: better-sqlite3
