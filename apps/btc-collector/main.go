@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -21,8 +22,13 @@ func main() {
 	if coin == "" {
 		coin = "BTC"
 	}
+	
+	dataDir := "/data/raw"
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		log.Printf("Warning: Could not create data dir: %v", err)
+	}
 
-	log.Printf("Starting %s Collector...", coin)
+	log.Printf("Starting %s Collector (File Mode)...", coin)
 
 	// Simulate collection loop
 	go func() {
@@ -36,7 +42,16 @@ func main() {
 			}
 			
 			jsonData, _ := json.Marshal(data)
-			log.Printf("Collected: %s", string(jsonData))
+			
+			// Write to file
+			filename := fmt.Sprintf("%s_%d.json", coin, time.Now().Unix())
+			filePath := filepath.Join(dataDir, filename)
+			
+			if err := os.WriteFile(filePath, jsonData, 0644); err != nil {
+				log.Printf("Error writing file: %v", err)
+			} else {
+				log.Printf("Saved: %s", filePath)
+			}
 			
 			time.Sleep(10 * time.Second)
 		}
