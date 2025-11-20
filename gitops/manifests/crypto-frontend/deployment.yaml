@@ -24,7 +24,7 @@ spec:
           image: diegohnunes/crypto-frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 3000
+            - containerPort: 4000
           env:
             - name: DB_PATH
               value: "/data/crypto.db"
