@@ -16,17 +16,21 @@ data:
       baseUrl: http://localhost:7007
       listen:
         port: 7000
+        host: '0.0.0.0' # CRITICO: Aceita conexões externas ao container
       
+      # Permite ler arquivos raw do GitHub
       reading:
         allow:
           - host: '*'
-
+      
       csp:
         connect-src: ["'self'", 'http:', 'https:']
+        
       cors:
         origin: http://localhost:7007
         methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
         credentials: true
+
       database:
         client: better-sqlite3
         connection: ':memory:'
@@ -50,12 +54,11 @@ data:
         entityFilename: catalog-info.yaml
       rules:
         - allow: [Component, System, API, Resource, Location, Template]
+      
+      # AQUI: Deixei APENAS o seu catálogo para parar o erro 404 do sample.yaml
       locations:
         - type: url
           target: https://raw.githubusercontent.com/Diegohnunes/crypto-platform-ops/main/idp/catalog-info.yaml
-          # REMOVIDO: "rules: - allow: [Template]"
-          # Se deixarmos aquela regra, ele bloqueia o arquivo catalog-info.yaml
-          # pois ele é do tipo "Location", não "Template".
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -75,6 +78,7 @@ spec:
       containers:
       - name: backstage
         image: roadiehq/community-backstage-image:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 7000
           name: http
