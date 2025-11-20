@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crypto-ingestor
+  namespace: default
+  labels:
+    app: crypto-ingestor
+    coin: ALL
+    type: ingestor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crypto-ingestor
+  template:
+    metadata:
+      labels:
+        app: crypto-ingestor
+        coin: ALL
+        type: ingestor
+    spec:
+      containers:
+        - name: crypto-ingestor
+          image: diegohnunes/crypto-ingestor:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: crypto-ingestor-config
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

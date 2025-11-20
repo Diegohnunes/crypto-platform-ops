@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crypto-ingestor-config
+  namespace: default
+data:
+  COIN: "ALL"
+  SERVICE_TYPE: "ingestor"
+  LOG_LEVEL: "info"
