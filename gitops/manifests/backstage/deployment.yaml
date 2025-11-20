@@ -7,14 +7,12 @@ data:
   app-config.yaml: |
     app:
       title: CryptoLab IDP
-      # Backup config
       baseUrl: http://localhost:7007
 
     organization:
       name: CryptoLab
 
     backend:
-      # Backup config
       baseUrl: http://localhost:7007
       listen:
         port: 7000
@@ -23,14 +21,19 @@ data:
       reading:
         allow:
           - host: '*'
-      
+
       csp:
         connect-src: ["'self'", 'http:', 'https:']
         
+      # --- CORREÇÃO DO CORS AQUI ---
       cors:
-        origin: http://localhost:7007
+        origin:
+          - http://localhost:7007
+          - http://127.0.0.1:7007
+          - http://localhost:3000
         methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
         credentials: true
+      # -----------------------------
 
       database:
         client: better-sqlite3
