@@ -6,4 +6,4 @@ metadata:
 spec:
   type: url
   targets:
-    - https://github.com/Diegohnunes/crypto-platform-ops/blob/main/idp/templates/crypto-collector/template.yaml
+    - https://raw.githubusercontent.com/Diegohnunes/crypto-platform-ops/main/idp/templates/crypto-collector/template.yaml

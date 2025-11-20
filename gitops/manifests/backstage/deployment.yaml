@@ -52,7 +52,7 @@ data:
         - allow: [Component, System, API, Resource, Location, Template]
       locations:
         - type: url
-          target: https://github.com/Diegohnunes/crypto-platform-ops/blob/main/idp/catalog-info.yaml
+          target: https://raw.githubusercontent.com/Diegohnunes/crypto-platform-ops/main/idp/catalog-info.yaml
           rules:
             - allow: [Template]
 ---
