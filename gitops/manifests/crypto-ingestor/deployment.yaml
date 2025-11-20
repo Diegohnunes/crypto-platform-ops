@@ -34,8 +34,8 @@ spec:
               mountPath: /data
       containers:
         - name: crypto-ingestor
-          image: diegohnunes/crypto-ingestor:latest
-          imagePullPolicy: IfNotPresent
+          image: diegohnunes/crypto-ingestor:v1.1
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               name: http

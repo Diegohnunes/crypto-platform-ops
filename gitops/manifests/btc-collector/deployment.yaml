@@ -25,8 +25,8 @@ spec:
         runAsGroup: 2000
       containers:
         - name: btc-collector
-          image: diegohnunes/btc-collector:latest
-          imagePullPolicy: IfNotPresent
+          image: diegohnunes/btc-collector:v1.1
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               name: http
