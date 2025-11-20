@@ -21,8 +21,15 @@ data:
       reading:
         allow:
           - host: github.com
+            protocol: https
           - host: raw.githubusercontent.com
+            protocol: https
+          - host: codeload.github.com
+            protocol: https
+          - host: github-cloud.s3.amazonaws.com
+            protocol: https
           - host: api.github.com
+            protocol: https
           - host: '*'
 
       csp:
@@ -53,8 +60,8 @@ data:
       rules:
         - allow: [Component, System, API, Resource, Location, Template]
       locations:
-        - type: url
-          target: https://raw.githubusercontent.com/Diegohnunes/crypto-platform-ops/main/idp/catalog-info.yaml
+        - type: github
+          target: https://github.com/Diegohnunes/crypto-platform-ops/blob/main/idp/catalog-info.yaml
 ---
 apiVersion: apps/v1
 kind: Deployment
