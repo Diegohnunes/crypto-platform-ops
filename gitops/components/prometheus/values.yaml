@@ -3,27 +3,22 @@ alertmanager:
 pushgateway:
   enabled: false
 nodeExporter:
-  enabled: true
-  resources:
-    limits:
-      cpu: 100m
-      memory: 64Mi
-    requests:
-      cpu: 50m
-      memory: 32Mi
+  enabled: false
+kubeStateMetrics:
+  enabled: false
 server:
   global:
     scrape_interval: 1m
     scrape_timeout: 10s
     evaluation_interval: 1m
-  retention: "2d"
+  retention: "1h"
   resources:
     limits:
-      cpu: 500m
-      memory: 256Mi
-    requests:
-      cpu: 100m
+      cpu: 200m
       memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
   persistentVolume:
     enabled: false # Ephemeral for lab
 configmapReload:
