@@ -35,7 +35,7 @@ spec:
       containers:
         - name: crypto-ingestor
           image: diegohnunes/crypto-ingestor:v1.1
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               name: http

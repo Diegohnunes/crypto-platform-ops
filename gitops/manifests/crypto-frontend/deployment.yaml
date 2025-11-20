@@ -22,7 +22,7 @@ spec:
       containers:
         - name: crypto-frontend
           image: diegohnunes/crypto-frontend:v1.1
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
           env:
