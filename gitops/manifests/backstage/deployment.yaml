@@ -15,11 +15,11 @@ data:
     backend:
       baseUrl: http://localhost:7007
       listen:
-        port: 7007
+        port: 7000
+      
       reading:
         allow:
-          - host: raw.githubusercontent.com
-          - host: github.com
+          - host: '*'
 
       csp:
         connect-src: ["'self'", 'http:', 'https:']
@@ -53,9 +53,9 @@ data:
       locations:
         - type: url
           target: https://raw.githubusercontent.com/Diegohnunes/crypto-platform-ops/main/idp/catalog-info.yaml
-          # CORREÇÃO: Removi a regra "rules: - allow: [Template]" daqui.
-          # Motivo: Se catalog-info.yaml for do tipo "Location" (agrupador),
-          # a regra anterior bloqueava a leitura dele antes mesmo de chegar no Template.
+          # REMOVIDO: "rules: - allow: [Template]"
+          # Se deixarmos aquela regra, ele bloqueia o arquivo catalog-info.yaml
+          # pois ele é do tipo "Location", não "Template".
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -76,7 +76,7 @@ spec:
       - name: backstage
         image: roadiehq/community-backstage-image:latest
         ports:
-        - containerPort: 7007
+        - containerPort: 7000
           name: http
         env:
         - name: GITHUB_TOKEN
@@ -110,5 +110,6 @@ spec:
     app: backstage
   ports:
     - port: 7007
-      targetPort: 7007
+      targetPort: 7000
+      name: http
   type: ClusterIP
