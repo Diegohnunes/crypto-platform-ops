@@ -1,9 +1,9 @@
 apiVersion: backstage.io/v1alpha1
 kind: Location
 metadata:
-  name: crypto-collector-template
-  description: A template for creating a new Crypto Collector microservice
+  name: crypto-collector-templates
+  description: Crypto Collector templates for the platform
 spec:
   type: url
   targets:
-    - ./templates/crypto-collector/template.yaml
+    - https://github.com/Diegohnunes/crypto-platform-ops/blob/main/idp/templates/crypto-collector/template.yaml
