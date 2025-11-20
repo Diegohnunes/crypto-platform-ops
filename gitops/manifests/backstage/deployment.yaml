@@ -30,6 +30,8 @@ data:
       github:
         - host: github.com
           token: ${GITHUB_TOKEN}
+        - host: raw.githubusercontent.com
+          token: ${GITHUB_TOKEN}
 
     proxy: {}
 
