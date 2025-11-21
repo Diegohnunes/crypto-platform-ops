@@ -28,7 +28,7 @@ spec:
               mountPath: /data
       containers:
         - name: eth-collector
-          image: diegohnunes/btc-collector:v1.3
+          image: diegohnunes/btc-collector:v1.4
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

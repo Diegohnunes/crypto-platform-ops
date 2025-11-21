@@ -106,7 +106,7 @@ func main() {
 			if err != nil {
 				log.Printf("Error fetching price: %v", err)
 				// Wait a bit before retrying on error
-				time.Sleep(10 * time.Second)
+				time.Sleep(60 * time.Second)
 				continue
 			}
 			
