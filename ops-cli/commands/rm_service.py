@@ -39,10 +39,19 @@ def rm_service_command(name, coin, service_type):
     import time
     print(f"   ⏳ Waiting for namespace {namespace} to disappear...")
     for _ in range(30):
-        check_ns = run_command(f"kubectl get namespace {namespace}", check=False)
-        if "NotFound" in check_ns or "not found" in check_ns:
-            print(f"   ✅ Namespace deleted")
-            break
+        # Use subprocess directly to check return code and stderr
+        result = subprocess.run(
+            f"kubectl get namespace {namespace}", 
+            shell=True, 
+            capture_output=True, 
+            text=True
+        )
+        
+        if result.returncode != 0:
+            if "NotFound" in result.stderr or "not found" in result.stderr:
+                print(f"   ✅ Namespace deleted")
+                break
+        
         time.sleep(2)
     else:
          print(f"   ⚠️  Namespace {namespace} is still terminating (likely stuck on finalizers)")
