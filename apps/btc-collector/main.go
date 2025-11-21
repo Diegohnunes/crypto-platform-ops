@@ -11,7 +11,24 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+var (
+	cryptoPrice = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "crypto_price",
+			Help: "Current price of the cryptocurrency",
+		},
+		[]string{"symbol", "source"},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(cryptoPrice)
+}
 
 type PriceData struct {
 	Symbol    string    `json:"symbol"`
@@ -204,6 +221,9 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
+	// Prometheus metrics endpoint
+	http.Handle("/metrics", promhttp.Handler())
+
 	go func() {
 		log.Println("Server listening on port 8080")
 		if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -231,6 +251,9 @@ func main() {
 				time.Sleep(10 * time.Second)
 				continue
 			}
+
+			// Update Prometheus metric
+			cryptoPrice.WithLabelValues(coin, "binance-api").Set(price)
 
 			data := PriceData{
 				Symbol:    coin,

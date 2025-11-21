@@ -18,6 +18,9 @@ spec:
         app: {{ name }}
         coin: {{ coin }}
         type: {{ type }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
     spec:
       initContainers:
         - name: fix-permissions

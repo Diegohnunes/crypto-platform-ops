@@ -127,6 +127,9 @@ spec:
     generate_file(env, "service.yaml.j2", output_manifests_dir, "service.yaml", context)
     generate_file(env, "configmap.yaml.j2", output_manifests_dir, "configmap.yaml", context)
 
+    # Generate go.mod
+    generate_file(env, "go.mod.j2", output_code_dir, "go.mod", context)
+
 
     print("\nStep 7/10: Generating ArgoCD application...")
     os.makedirs(output_apps_dir, exist_ok=True)

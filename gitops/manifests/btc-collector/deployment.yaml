@@ -18,6 +18,9 @@ spec:
         app: btc-collector
         coin: BTC
         type: collector
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
     spec:
       initContainers:
         - name: fix-permissions
@@ -30,7 +33,7 @@ spec:
               mountPath: /data
       containers:
         - name: btc-collector
-          image: diegohnunes/btc-collector:v2.0
+          image: diegohnunes/btc-collector:v2.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
