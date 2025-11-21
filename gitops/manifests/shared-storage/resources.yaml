@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: crypto-pv-shared
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/tmp/crypto-data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: crypto-shared-storage
+  namespace: default
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: crypto-pv-shared
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: crypto-shared-storage
+  namespace: btc-app
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: crypto-pv-shared
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: crypto-shared-storage
+  namespace: eth-app
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: crypto-pv-shared
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: crypto-shared-storage
+  namespace: sol-app
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: crypto-pv-shared
