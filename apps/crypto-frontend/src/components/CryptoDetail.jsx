@@ -26,7 +26,7 @@ const CryptoDetail = () => {
         };
 
         fetchData();
-        const interval = setInterval(fetchData, 10000); // Poll every 10 seconds
+        const interval = setInterval(fetchData, 10000);
 
         return () => clearInterval(interval);
     }, [symbol]);

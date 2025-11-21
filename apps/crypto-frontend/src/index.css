@@ -16,12 +16,12 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
   min-height: 100vh;
-  background-image: 
+  background-image:
     radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.1) 0%, transparent 20%),
     radial-gradient(circle at 90% 80%, rgba(129, 140, 248, 0.1) 0%, transparent 20%);
 }
 
-/* Utilities */
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -44,6 +44,7 @@ body {
 
 .text-gradient {
   background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -89,7 +90,7 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Chart Tooltip */
+
 .recharts-tooltip-wrapper {
   outline: none;
 }

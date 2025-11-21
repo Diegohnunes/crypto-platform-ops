@@ -25,7 +25,7 @@ type BinancePriceResponse struct {
 	Price  string `json:"price"`
 }
 
-// Binance Klines Response: [timestamp, open, high, low, close, volume, ...]
+
 type BinanceKlineResponse [][]interface{}
 
 type BinanceClient struct {
@@ -41,7 +41,7 @@ func NewBinanceClient() *BinanceClient {
 }
 
 func (c *BinanceClient) GetPrice(symbol string) (float64, error) {
-	// Convert BTC -> BTCUSDT
+
 	pair := fmt.Sprintf("%sUSDT", symbol)
 	url := fmt.Sprintf("%s/api/v3/ticker/price?symbol=%s", c.baseURL, pair)
 	
@@ -75,14 +75,14 @@ func (c *BinanceClient) GetPrice(symbol string) (float64, error) {
 }
 
 func (c *BinanceClient) GetHistoricalPrices(symbol string, from, to time.Time) ([]PriceData, error) {
-	// Convert BTC -> BTCUSDT
+
 	pair := fmt.Sprintf("%sUSDT", symbol)
 	
-	// Binance expects timestamps in milliseconds
+
 	startTime := from.UnixMilli()
 	endTime := to.UnixMilli()
 	
-	// interval=1m for 1-minute candles, limit=500 (max per request)
+
 	url := fmt.Sprintf("%s/api/v3/klines?symbol=%s&interval=1m&startTime=%d&endTime=%d&limit=500",
 		c.baseURL, pair, startTime, endTime)
 	
@@ -113,7 +113,7 @@ func (c *BinanceClient) GetHistoricalPrices(symbol string, from, to time.Time) (
 			continue
 		}
 		
-		// kline[0] = timestamp (ms), kline[4] = close price
+
 		timestampMs, ok := kline[0].(float64)
 		if !ok {
 			continue
@@ -140,7 +140,7 @@ func (c *BinanceClient) GetHistoricalPrices(symbol string, from, to time.Time) (
 }
 
 func backfillHistoricalData(client *BinanceClient, coin string) error {
-	// Check if data already exists
+
 	pattern := filepath.Join("/data/raw", fmt.Sprintf("%s_*.json", coin))
 	files, _ := filepath.Glob(pattern)
 	if len(files) > 0 {
@@ -148,24 +148,24 @@ func backfillHistoricalData(client *BinanceClient, coin string) error {
 		return nil
 	}
 
-	log.Println("🔄 Backfilling 5 minutes of historical data from Binance...")
+	log.Println("Backfilling 5 minutes of historical data from Binance...")
 	
-	// Fetch last 5 minutes of data
+
 	to := time.Now()
 	from := to.Add(-5 * time.Minute)
 	
 	historicalPrices, err := client.GetHistoricalPrices(coin, from, to)
 	if err != nil {
-		log.Printf("⚠️  Failed to fetch historical data: %v", err)
+		log.Printf("Failed to fetch historical data: %v", err)
 		return err
 	}
 
 	if len(historicalPrices) == 0 {
-		log.Println("⚠️  No historical data received")
+		log.Println("No historical data received")
 		return fmt.Errorf("no historical data available")
 	}
 
-	// Save each historical price point
+
 	for _, priceData := range historicalPrices {
 		priceData.Symbol = coin
 		priceData.Source = "binance-historical"
@@ -183,7 +183,7 @@ func backfillHistoricalData(client *BinanceClient, coin string) error {
 		}
 	}
 
-	log.Printf("✅ Backfilled %d historical data points from Binance", len(historicalPrices))
+	log.Printf("Backfilled %d historical data points from Binance", len(historicalPrices))
 	return nil
 }
 
@@ -198,7 +198,7 @@ func main() {
 
 	client := NewBinanceClient()
 
-	// Start HTTP server for health checks
+
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
@@ -211,13 +211,13 @@ func main() {
 		}
 	}()
 
-	// Backfill historical data on startup
+
 	if err := backfillHistoricalData(client, coin); err != nil {
 		log.Printf("Warning: Could not backfill historical data: %v", err)
-		// Continue anyway - not critical for operation
+
 	}
 
-	// Main collection loop
+
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -227,7 +227,7 @@ func main() {
 			price, err := client.GetPrice(coin)
 			if err != nil {
 				log.Printf("Error fetching price: %v", err)
-				// Binance has higher limits, but still wait on error
+
 				time.Sleep(10 * time.Second)
 				continue
 			}

@@ -8,12 +8,10 @@ const CryptoCard = ({ symbol }) => {
     const [history, setHistory] = useState([]);
 
     useEffect(() => {
-        // Fetch latest price
         fetch(`/api/price/${symbol}`)
             .then(res => res.json())
             .then(setData);
 
-        // Fetch mini history for sparkline
         fetch(`/api/history/${symbol}?limit=20`)
             .then(res => res.json())
             .then(setHistory);

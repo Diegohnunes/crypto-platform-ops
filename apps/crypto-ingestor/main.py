@@ -6,7 +6,7 @@ import glob
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# Configuration
+
 DATA_DIR = "/data/raw"
 DB_PATH = "/data/crypto.db"
 PORT = 8080
@@ -22,7 +22,7 @@ class HealthHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def log_message(self, format, *args):
-        return  # Silence logs
+        return
 
 def get_db_connection():
     return sqlite3.connect(DB_PATH)
@@ -41,7 +41,7 @@ def init_db():
     """)
     conn.commit()
     conn.close()
-    print("✅ Database initialized (SQLite)")
+    print("Database initialized (SQLite)")
 
 def process_file(filepath):
     print(f"Processing {filepath}...")
@@ -58,27 +58,27 @@ def process_file(filepath):
         )
         conn.commit()
         conn.close()
-        print(f"✅ Ingested data for {data['symbol']}")
+        print(f"Ingested data for {data['symbol']}")
         
-        # Delete file after processing
+
         os.remove(filepath)
         
     except Exception as e:
-        print(f"❌ Error processing {filepath}: {e}")
+        print(f"Error processing {filepath}: {e}")
 
 def ingestion_loop():
-    print("🚀 Starting Ingestion Loop...")
+    print("Starting Ingestion Loop...")
     
-    # Ensure data dir exists
+
     if not os.path.exists(DATA_DIR):
-        print(f"⚠️ Waiting for {DATA_DIR}...")
+        print(f"Waiting for {DATA_DIR}...")
         time.sleep(5)
 
     init_db()
     
     while True:
         try:
-            # List JSON files
+
             files = glob.glob(os.path.join(DATA_DIR, "*.json"))
             if files:
                 for filepath in files:
@@ -87,20 +87,20 @@ def ingestion_loop():
                 pass
                 
         except Exception as e:
-            print(f"❌ Loop error: {e}")
+            print(f"Loop error: {e}")
             
         time.sleep(5)
 
 def main():
-    print(f"🚀 Starting Crypto Ingestor (HTTP + Worker Mode) on port {PORT}...")
+    print(f"Starting Crypto Ingestor (HTTP + Worker Mode) on port {PORT}...")
     
-    # Start ingestion loop in a separate thread
+
     worker_thread = threading.Thread(target=ingestion_loop, daemon=True)
     worker_thread.start()
 
-    # Start HTTP server for health checks
+
     server = HTTPServer(('0.0.0.0', PORT), HealthHandler)
-    print(f"✅ Health check server listening on {PORT}")
+    print(f"Health check server listening on {PORT}")
     server.serve_forever()
 
 if __name__ == "__main__":
