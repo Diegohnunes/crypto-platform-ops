@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: dot-collector-config
-  namespace: dot-app
-data:
-  COIN: "DOT"
-  SERVICE_TYPE: "collector"
-  LOG_LEVEL: "info"
