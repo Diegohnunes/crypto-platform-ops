@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: btc-collector
-  namespace: btc-app
+  namespace: default
   labels:
     app: btc-collector
     coin: BTC
