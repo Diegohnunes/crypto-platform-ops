@@ -52,15 +52,16 @@ const CryptoCard = ({ symbol }) => {
                     </h2>
                 </div>
 
-                <div style={{ height: '60px', margin: '0 -1.5rem -1.5rem -1.5rem' }}>
+                <div style={{ height: '80px', margin: '0 -1.5rem -1.5rem -1.5rem' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={history}>
+                        <LineChart data={history} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                             <Line
                                 type="monotone"
                                 dataKey="price"
                                 stroke={isPositive ? 'var(--success)' : 'var(--danger)'}
                                 strokeWidth={2}
                                 dot={false}
+                                isAnimationActive={false}
                             />
                         </LineChart>
                     </ResponsiveContainer>
