@@ -5,9 +5,12 @@ def run_command(cmd, cwd=None, check=True):
     """Execute shell command"""
     print(f"   🔧 Running: {cmd}")
     result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, check=check)
-    if result.returncode != 0 and check:
-        print(f"   ❌ Error: {result.stderr}")
-        raise Exception(f"Command failed: {cmd}")
+    if result.returncode != 0:
+        if check:
+            print(f"   ❌ Error: {result.stderr}")
+            raise Exception(f"Command failed: {cmd}")
+        else:
+            print(f"   ⚠️  Command failed (ignoring): {result.stderr.strip()}")
     return result.stdout
 
 def rm_service_command(name, coin, service_type):
@@ -30,8 +33,19 @@ def rm_service_command(name, coin, service_type):
     # STEP 2: Delete Namespace (this deletes all resources)
     # ============================================================
     print(f"\n🏗️  Step 2/7: Deleting namespace {namespace}...")
-    run_command(f"kubectl delete namespace {namespace}", check=False)
-    print(f"   ✅ Namespace deleted")
+    run_command(f"kubectl delete namespace {namespace} --timeout=60s", check=False)
+    
+    # Wait for namespace to be gone
+    import time
+    print(f"   ⏳ Waiting for namespace {namespace} to disappear...")
+    for _ in range(30):
+        check_ns = run_command(f"kubectl get namespace {namespace}", check=False)
+        if "NotFound" in check_ns or "not found" in check_ns:
+            print(f"   ✅ Namespace deleted")
+            break
+        time.sleep(2)
+    else:
+         print(f"   ⚠️  Namespace {namespace} is still terminating (likely stuck on finalizers)")
 
     # ============================================================
     # STEP 3: Delete PersistentVolume
