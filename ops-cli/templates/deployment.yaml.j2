@@ -23,6 +23,8 @@ spec:
         - name: fix-permissions
           image: busybox
           command: ["sh", "-c", "mkdir -p /data/raw && chown -R 1000:2000 /data/raw"]
+          securityContext:
+            runAsUser: 0
           volumeMounts:
             - name: shared-data
               mountPath: /data
