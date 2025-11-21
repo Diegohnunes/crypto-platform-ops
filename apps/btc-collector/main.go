@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -19,28 +20,30 @@ type PriceData struct {
 	Source    string    `json:"source"`
 }
 
-type CoinGeckoResponse map[string]struct {
-	USD float64 `json:"usd"`
+type BinancePriceResponse struct {
+	Symbol string `json:"symbol"`
+	Price  string `json:"price"`
 }
 
-type MarketChartResponse struct {
-	Prices [][]float64 `json:"prices"`
-}
+// Binance Klines Response: [timestamp, open, high, low, close, volume, ...]
+type BinanceKlineResponse [][]interface{}
 
-type CoinGeckoClient struct {
+type BinanceClient struct {
 	httpClient *http.Client
 	baseURL    string
 }
 
-func NewCoinGeckoClient() *CoinGeckoClient {
-	return &CoinGeckoClient{
+func NewBinanceClient() *BinanceClient {
+	return &BinanceClient{
 		httpClient: &http.Client{Timeout: 10 * time.Second},
-		baseURL:    "https://api.coingecko.com/api/v3",
+		baseURL:    "https://api.binance.com",
 	}
 }
 
-func (c *CoinGeckoClient) GetPrice(coinID string) (float64, error) {
-	url := fmt.Sprintf("%s/simple/price?ids=%s&vs_currencies=usd", c.baseURL, coinID)
+func (c *BinanceClient) GetPrice(symbol string) (float64, error) {
+	// Convert BTC -> BTCUSDT
+	pair := fmt.Sprintf("%sUSDT", symbol)
+	url := fmt.Sprintf("%s/api/v3/ticker/price?symbol=%s", c.baseURL, pair)
 	
 	resp, err := c.httpClient.Get(url)
 	if err != nil {
@@ -49,7 +52,8 @@ func (c *CoinGeckoClient) GetPrice(coinID string) (float64, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("API returned status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return 0, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -57,22 +61,30 @@ func (c *CoinGeckoClient) GetPrice(coinID string) (float64, error) {
 		return 0, err
 	}
 
-	var result CoinGeckoResponse
+	var result BinancePriceResponse
 	if err := json.Unmarshal(body, &result); err != nil {
 		return 0, err
 	}
 
-	priceData, ok := result[coinID]
-	if !ok {
-		return 0, fmt.Errorf("coin %s not found in response", coinID)
+	price, err := strconv.ParseFloat(result.Price, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse price: %v", err)
 	}
 
-	return priceData.USD, nil
+	return price, nil
 }
 
-func (c *CoinGeckoClient) GetHistoricalPrices(coinID string, from, to time.Time) ([]PriceData, error) {
-	url := fmt.Sprintf("%s/coins/%s/market_chart/range?vs_currency=usd&from=%d&to=%d",
-		c.baseURL, coinID, from.Unix(), to.Unix())
+func (c *BinanceClient) GetHistoricalPrices(symbol string, from, to time.Time) ([]PriceData, error) {
+	// Convert BTC -> BTCUSDT
+	pair := fmt.Sprintf("%sUSDT", symbol)
+	
+	// Binance expects timestamps in milliseconds
+	startTime := from.UnixMilli()
+	endTime := to.UnixMilli()
+	
+	// interval=1m for 1-minute candles, limit=500 (max per request)
+	url := fmt.Sprintf("%s/api/v3/klines?symbol=%s&interval=1m&startTime=%d&endTime=%d&limit=500",
+		c.baseURL, pair, startTime, endTime)
 	
 	resp, err := c.httpClient.Get(url)
 	if err != nil {
@@ -81,7 +93,8 @@ func (c *CoinGeckoClient) GetHistoricalPrices(coinID string, from, to time.Time)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -89,40 +102,44 @@ func (c *CoinGeckoClient) GetHistoricalPrices(coinID string, from, to time.Time)
 		return nil, err
 	}
 
-	var result MarketChartResponse
-	if err := json.Unmarshal(body, &result); err != nil {
+	var klines BinanceKlineResponse
+	if err := json.Unmarshal(body, &klines); err != nil {
 		return nil, err
 	}
 
 	var prices []PriceData
-	for _, price := range result.Prices {
-		if len(price) >= 2 {
-			timestamp := time.Unix(int64(price[0])/1000, 0)
-			prices = append(prices, PriceData{
-				Price:     price[1],
-				Timestamp: timestamp,
-			})
+	for _, kline := range klines {
+		if len(kline) < 5 {
+			continue
 		}
+		
+		// kline[0] = timestamp (ms), kline[4] = close price
+		timestampMs, ok := kline[0].(float64)
+		if !ok {
+			continue
+		}
+		
+		closePrice, ok := kline[4].(string)
+		if !ok {
+			continue
+		}
+		
+		price, err := strconv.ParseFloat(closePrice, 64)
+		if err != nil {
+			continue
+		}
+		
+		timestamp := time.UnixMilli(int64(timestampMs))
+		prices = append(prices, PriceData{
+			Price:     price,
+			Timestamp: timestamp,
+		})
 	}
 
 	return prices, nil
 }
 
-func getCoinID(symbol string) string {
-	symbol = strings.ToUpper(symbol)
-	switch symbol {
-	case "BTC":
-		return "bitcoin"
-	case "ETH":
-		return "ethereum"
-	case "SOL":
-		return "solana"
-	default:
-		return strings.ToLower(symbol)
-	}
-}
-
-func backfillHistoricalData(client *CoinGeckoClient, coin, coinID string) error {
+func backfillHistoricalData(client *BinanceClient, coin string) error {
 	// Check if data already exists
 	pattern := filepath.Join("/data/raw", fmt.Sprintf("%s_*.json", coin))
 	files, _ := filepath.Glob(pattern)
@@ -131,13 +148,13 @@ func backfillHistoricalData(client *CoinGeckoClient, coin, coinID string) error 
 		return nil
 	}
 
-	log.Println("🔄 Backfilling 5 minutes of historical data...")
+	log.Println("🔄 Backfilling 5 minutes of historical data from Binance...")
 	
 	// Fetch last 5 minutes of data
 	to := time.Now()
 	from := to.Add(-5 * time.Minute)
 	
-	historicalPrices, err := client.GetHistoricalPrices(coinID, from, to)
+	historicalPrices, err := client.GetHistoricalPrices(coin, from, to)
 	if err != nil {
 		log.Printf("⚠️  Failed to fetch historical data: %v", err)
 		return err
@@ -151,7 +168,7 @@ func backfillHistoricalData(client *CoinGeckoClient, coin, coinID string) error 
 	// Save each historical price point
 	for _, priceData := range historicalPrices {
 		priceData.Symbol = coin
-		priceData.Source = "coingecko-historical"
+		priceData.Source = "binance-historical"
 		
 		filename := fmt.Sprintf("/data/raw/%s_%d.json", coin, priceData.Timestamp.Unix())
 		data, err := json.MarshalIndent(priceData, "", "  ")
@@ -166,7 +183,7 @@ func backfillHistoricalData(client *CoinGeckoClient, coin, coinID string) error 
 		}
 	}
 
-	log.Printf("✅ Backfilled %d historical data points", len(historicalPrices))
+	log.Printf("✅ Backfilled %d historical data points from Binance", len(historicalPrices))
 	return nil
 }
 
@@ -175,13 +192,11 @@ func main() {
 	if coin == "" {
 		coin = "BTC"
 	}
-
-	coinID := getCoinID(coin)
 	
-	log.Printf("Starting %s Collector (Real Data Mode - CoinGecko)...", coin)
-	log.Printf("Coin ID: %s", coinID)
+	log.Printf("Starting %s Collector (Binance API v2.0)...", coin)
+	log.Printf("Trading Pair: %sUSDT", coin)
 
-	client := NewCoinGeckoClient()
+	client := NewBinanceClient()
 
 	// Start HTTP server for health checks
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +212,7 @@ func main() {
 	}()
 
 	// Backfill historical data on startup
-	if err := backfillHistoricalData(client, coin, coinID); err != nil {
+	if err := backfillHistoricalData(client, coin); err != nil {
 		log.Printf("Warning: Could not backfill historical data: %v", err)
 		// Continue anyway - not critical for operation
 	}
@@ -209,11 +224,11 @@ func main() {
 	for {
 		select {
 		case <-ticker.C:
-			price, err := client.GetPrice(coinID)
+			price, err := client.GetPrice(coin)
 			if err != nil {
 				log.Printf("Error fetching price: %v", err)
-				// Wait a bit before retrying on error
-				time.Sleep(60 * time.Second)
+				// Binance has higher limits, but still wait on error
+				time.Sleep(10 * time.Second)
 				continue
 			}
 
@@ -221,7 +236,7 @@ func main() {
 				Symbol:    coin,
 				Price:     price,
 				Timestamp: time.Now(),
-				Source:    "coingecko-api",
+				Source:    "binance-api",
 			}
 
 			filename := fmt.Sprintf("/data/raw/%s_%d.json", coin, time.Now().Unix())
