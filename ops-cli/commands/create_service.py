@@ -44,12 +44,13 @@ def create_service_command(name, coin, service_type):
     os.makedirs(output_code_dir, exist_ok=True)
     generate_file(env, "main.go.j2", output_code_dir, "main.go", context)
     
-    # Copy Dockerfile
-    dockerfile_src = os.path.join(base_dir, "apps", "btc-collector", "Dockerfile")
+    # Copy Dockerfile from template
+    dockerfile_src = os.path.join(templates_dir, "Dockerfile")
     dockerfile_dst = os.path.join(output_code_dir, "Dockerfile")
     with open(dockerfile_src, 'r') as src, open(dockerfile_dst, 'w') as dst:
         dst.write(src.read())
     print(f"   📄 Created Dockerfile")
+
 
     # ============================================================
     # STEP 2: Build Docker Image
