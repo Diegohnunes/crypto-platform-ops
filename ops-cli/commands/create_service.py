@@ -18,12 +18,13 @@ def create_service_command(name, coin, service_type):
     env = Environment(loader=FileSystemLoader(templates_dir))
 
     # Context for templates
+    namespace = f"{coin.lower()}-app"
     context = {
         "name": name,
         "coin": coin,
         "type": service_type,
-        "image": f"diegohnunes/{name}:latest", # Placeholder
-        "namespace": "default" # Or specific namespace
+        "image": f"diegohnunes/btc-collector:v1.3", # Re-using the generic collector image
+        "namespace": namespace
     }
 
     # 1. Generate Deployment

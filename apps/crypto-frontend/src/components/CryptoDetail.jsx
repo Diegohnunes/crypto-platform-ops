@@ -9,19 +9,26 @@ const CryptoDetail = () => {
     const [stats, setStats] = useState({ min: 0, max: 0, avg: 0 });
 
     useEffect(() => {
-        fetch(`/api/history/${symbol}?limit=100`)
-            .then(res => res.json())
-            .then(data => {
-                setHistory(data);
-                if (data.length > 0) {
-                    const prices = data.map(d => d.price);
-                    setStats({
-                        min: Math.min(...prices),
-                        max: Math.max(...prices),
-                        avg: prices.reduce((a, b) => a + b, 0) / prices.length
-                    });
-                }
-            });
+        const fetchData = () => {
+            fetch(`/api/history/${symbol}?limit=100`)
+                .then(res => res.json())
+                .then(data => {
+                    setHistory(data);
+                    if (data.length > 0) {
+                        const prices = data.map(d => d.price);
+                        setStats({
+                            min: Math.min(...prices),
+                            max: Math.max(...prices),
+                            avg: prices.reduce((a, b) => a + b, 0) / prices.length
+                        });
+                    }
+                });
+        };
+
+        fetchData();
+        const interval = setInterval(fetchData, 10000); // Poll every 10 seconds
+
+        return () => clearInterval(interval);
     }, [symbol]);
 
     if (history.length === 0) return <div className="container">Loading...</div>;

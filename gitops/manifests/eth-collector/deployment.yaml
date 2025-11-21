@@ -1,30 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: btc-collector
-  namespace: btc-app
+  name: eth-collector
+  namespace: eth-app
   labels:
-    app: btc-collector
-    coin: BTC
+    app: eth-collector
+    coin: ETH
     type: collector
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: btc-collector
+      app: eth-collector
   template:
     metadata:
       labels:
-        app: btc-collector
-        coin: BTC
+        app: eth-collector
+        coin: ETH
         type: collector
     spec:
-      securityContext:
-        fsGroup: 2000
-        runAsUser: 1000
-        runAsGroup: 2000
       containers:
-        - name: btc-collector
+        - name: eth-collector
           image: diegohnunes/btc-collector:v1.3
           imagePullPolicy: IfNotPresent
           ports:
@@ -44,7 +40,7 @@ spec:
             periodSeconds: 10
           envFrom:
             - configMapRef:
-                name: btc-collector-config
+                name: eth-collector-config
           resources:
             requests:
               cpu: 50m
@@ -52,10 +48,3 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
-          volumeMounts:
-            - name: shared-data
-              mountPath: /data
-      volumes:
-        - name: shared-data
-          persistentVolumeClaim:
-            claimName: crypto-shared-storage
