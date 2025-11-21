@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: crypto-pv-shared
+  name: crypto-pv-default
   labels:
     type: local
 spec:
@@ -25,7 +25,22 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  volumeName: crypto-pv-shared
+  volumeName: crypto-pv-default
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: crypto-pv-btc
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/tmp/crypto-data"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -39,7 +54,22 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  volumeName: crypto-pv-shared
+  volumeName: crypto-pv-btc
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: crypto-pv-eth
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/tmp/crypto-data"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -53,7 +83,22 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  volumeName: crypto-pv-shared
+  volumeName: crypto-pv-eth
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: crypto-pv-sol
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/tmp/crypto-data"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -67,4 +112,4 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  volumeName: crypto-pv-shared
+  volumeName: crypto-pv-sol
