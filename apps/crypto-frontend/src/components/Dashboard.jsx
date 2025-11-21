@@ -8,13 +8,20 @@ const CryptoCard = ({ symbol }) => {
     const [history, setHistory] = useState([]);
 
     useEffect(() => {
-        fetch(`/api/price/${symbol}`)
-            .then(res => res.json())
-            .then(setData);
+        const fetchData = () => {
+            fetch(`/api/price/${symbol}`)
+                .then(res => res.json())
+                .then(setData);
 
-        fetch(`/api/history/${symbol}?limit=20`)
-            .then(res => res.json())
-            .then(setHistory);
+            fetch(`/api/history/${symbol}?limit=20`)
+                .then(res => res.json())
+                .then(setHistory);
+        };
+
+        fetchData();
+        const interval = setInterval(fetchData, 10000);
+
+        return () => clearInterval(interval);
     }, [symbol]);
 
     if (!data) return <div className="glass-card animate-pulse" style={{ height: '200px' }}></div>;
