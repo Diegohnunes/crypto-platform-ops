@@ -87,7 +87,7 @@ kubectl port-forward -n default svc/crypto-frontend 4000:80
 
 Access: http://localhost:4000
 
-## 🛠 IDP Commands
+##  IDP Commands
 
 The platform includes a fully automated IDP for managing cryptocurrency collectors.
 
