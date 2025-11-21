@@ -57,7 +57,7 @@ func (c *CoinGeckoClient) GetPrice(coinID string) (float64, error) {
 		return 0, err
 	}
 
-	var result CoinGecko Response
+	var result CoinGeckoResponse
 	if err := json.Unmarshal(body, &result); err != nil {
 		return 0, err
 	}
