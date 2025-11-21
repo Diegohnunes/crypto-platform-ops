@@ -72,8 +72,7 @@ def rm_service_command(name, coin, service_type):
 
     print(f"\nStep 4/8: Cleaning database records...")
     # Clean up database entries for this coin
-    cleanup_script = f"""
-import sqlite3
+    cleanup_script = f"""import sqlite3
 import os
 
 db_path = '/data/crypto.db'
@@ -84,25 +83,48 @@ if os.path.exists(db_path):
     deleted = cur.rowcount
     conn.commit()
     conn.close()
-    print(f"   Deleted {{deleted}} database records for {coin.upper()}")
+    print(f"Deleted {{deleted}} records for {coin.upper()}")
 else:
-    print("   Database not found (skipping)")
+    print("Database not found")
 """
     
     # Write cleanup script to temp file
-    with open("/tmp/db_cleanup.py", "w") as f:
+    import tempfile
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
         f.write(cleanup_script)
+        temp_script = f.name
     
-    # Execute cleanup via ingestor pod (has database access)
-    result = run_command(
-        "kubectl exec -n default deployment/crypto-ingestor -- python3 -c \"" + cleanup_script.replace('"', '\\"').replace('\n', ' ') + "\"",
-        check=False
-    )
-    
-    if "Deleted" in result:
-        print(f"   Database cleaned")
-    else:
-        print(f"   Database cleanup skipped (ingestor not available)")
+    try:
+        # Get ingestor pod name
+        pod_result = run_command(
+            "kubectl get pod -n default -l app=crypto-ingestor -o jsonpath='{.items[0].metadata.name}'",
+            check=False
+        )
+        
+        if pod_result and 'crypto-ingestor' in pod_result:
+            pod_name = pod_result.strip().strip("'")
+            
+            # Copy script to pod
+            run_command(f"kubectl cp {temp_script} default/{pod_name}:/tmp/cleanup.py", check=False)
+            
+            # Execute script
+            result = run_command(
+                f"kubectl exec -n default {pod_name} -- python3 /tmp/cleanup.py",
+                check=False
+            )
+            
+            if "Deleted" in result:
+                print(f"   {result.strip()}")
+            else:
+                print(f"   Database cleanup completed")
+        else:
+            print(f"   Ingestor pod not found (skipping database cleanup)")
+    finally:
+        # Clean up temp file
+        import os as os_module
+        if os_module.path.exists(temp_script):
+            os_module.remove(temp_script)
+
 
 
     print(f"\nStep 5/8: Deleting application code...")
