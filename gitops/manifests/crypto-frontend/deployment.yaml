@@ -21,7 +21,7 @@ spec:
         runAsGroup: 2000
       containers:
         - name: crypto-frontend
-          image: diegohnunes/crypto-frontend:v1.3
+          image: diegohnunes/crypto-frontend:v2.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
