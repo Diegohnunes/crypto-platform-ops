@@ -54,8 +54,19 @@ def rm_service_command(name, coin, service_type):
 
 
     print(f"\nStep 3/7: Deleting PersistentVolume...")
-    run_command(f"kubectl delete pv {pv_name}", check=False)
-    print(f"   PV deleted")
+    # Force delete PV even if it's in Released state
+    run_command(f"kubectl delete pv {pv_name} --force --grace-period=0", check=False)
+    
+    # Wait a moment for deletion
+    import time
+    time.sleep(2)
+    
+    # Verify it's gone
+    check_pv = run_command(f"kubectl get pv {pv_name}", check=False)
+    if pv_name in check_pv and "NotFound" not in check_pv:
+        print(f"   Warning: PV {pv_name} may still exist")
+    else:
+        print(f"   PV deleted")
 
 
     print(f"\nStep 4/7: Deleting application code...")
