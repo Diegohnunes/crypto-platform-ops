@@ -19,6 +19,13 @@ spec:
         coin: SOL
         type: collector
     spec:
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "mkdir -p /data/raw && chmod -R 777 /data"]
+          volumeMounts:
+            - name: shared-data
+              mountPath: /data
       containers:
         - name: sol-collector
           image: diegohnunes/btc-collector:v1.3
