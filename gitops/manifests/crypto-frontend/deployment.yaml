@@ -21,10 +21,23 @@ spec:
         runAsGroup: 2000
       containers:
         - name: crypto-frontend
-          image: diegohnunes/crypto-frontend:v1.1
+          image: diegohnunes/crypto-frontend:v1.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
           env:
             - name: DB_PATH
               value: "/data/crypto.db"

@@ -14,6 +14,11 @@ const DB_PATH = process.env.DB_PATH || '/data/crypto.db';
 app.use(cors());
 app.use(express.json());
 
+// Health Check
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../dist')));
 

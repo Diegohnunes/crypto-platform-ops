@@ -3,10 +3,26 @@ import time
 import json
 import sqlite3
 import glob
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Configuration
 DATA_DIR = "/data/raw"
 DB_PATH = "/data/crypto.db"
+PORT = 8080
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'OK')
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def log_message(self, format, *args):
+        return  # Silence logs
 
 def get_db_connection():
     return sqlite3.connect(DB_PATH)
@@ -50,8 +66,8 @@ def process_file(filepath):
     except Exception as e:
         print(f"❌ Error processing {filepath}: {e}")
 
-def main():
-    print("🚀 Starting Crypto Ingestor (SQLite Mode)...")
+def ingestion_loop():
+    print("🚀 Starting Ingestion Loop...")
     
     # Ensure data dir exists
     if not os.path.exists(DATA_DIR):
@@ -68,13 +84,24 @@ def main():
                 for filepath in files:
                     process_file(filepath)
             else:
-                # print("💤 No new files found...")
                 pass
                 
         except Exception as e:
             print(f"❌ Loop error: {e}")
             
         time.sleep(5)
+
+def main():
+    print(f"🚀 Starting Crypto Ingestor (HTTP + Worker Mode) on port {PORT}...")
+    
+    # Start ingestion loop in a separate thread
+    worker_thread = threading.Thread(target=ingestion_loop, daemon=True)
+    worker_thread.start()
+
+    # Start HTTP server for health checks
+    server = HTTPServer(('0.0.0.0', PORT), HealthHandler)
+    print(f"✅ Health check server listening on {PORT}")
+    server.serve_forever()
 
 if __name__ == "__main__":
     main()
