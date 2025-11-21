@@ -2,7 +2,7 @@
 
 A fully automated Internal Developer Platform (IDP) for cryptocurrency data collection, ingestion, and visualization running on Kubernetes.
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -50,7 +50,7 @@ A fully automated Internal Developer Platform (IDP) for cryptocurrency data coll
   - 10-second polling for live updates
   - API endpoints: `/api/cryptos`, `/api/price/{symbol}`, `/api/history/{symbol}`
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - k3d
@@ -87,7 +87,7 @@ kubectl port-forward -n default svc/crypto-frontend 4000:80
 
 Access: http://localhost:4000
 
-## 🛠️ IDP Commands
+## 🛠 IDP Commands
 
 The platform includes a fully automated IDP for managing cryptocurrency collectors.
 
@@ -98,16 +98,16 @@ python3 ops-cli/main.py create-service --name eth-collector --coin ETH --type co
 ```
 
 **What it does (10 automated steps):**
-1. ✅ Generates Go code from template
-2. ✅ Builds Docker image (`diegohnunes/{name}:v2.0`)
-3. ✅ Imports image to k3d cluster
-4. ✅ Creates Kubernetes namespace
-5. ✅ Creates PersistentVolume and PersistentVolumeClaim
-6. ✅ Generates all Kubernetes manifests
-7. ✅ Creates ArgoCD application config
-8. ✅ Deploys via ArgoCD
-9. ✅ Commits changes to Git
-10. ✅ Waits for pod to be ready
+1.  Generates Go code from template
+2.  Builds Docker image (`diegohnunes/{name}:v2.0`)
+3.  Imports image to k3d cluster
+4.  Creates Kubernetes namespace
+5.  Creates PersistentVolume and PersistentVolumeClaim
+6.  Generates all Kubernetes manifests
+7.  Creates ArgoCD application config
+8.  Deploys via ArgoCD
+9.  Commits changes to Git
+10.  Waits for pod to be ready
 
 **Supported coins:** BTC, ETH, SOL, DOT, MATIC, ADA, AVAX, LINK, UNI, DOGE
 (Any crypto with Binance `{SYMBOL}USDT` pair)
@@ -119,16 +119,16 @@ python3 ops-cli/main.py rm-service --name eth-collector --coin ETH --type collec
 ```
 
 **What it does (8 automated steps):**
-1. ✅ Deletes ArgoCD application
-2. ✅ Deletes Kubernetes namespace (waits for termination)
-3. ✅ Force-deletes PersistentVolume
-4. ✅ **Cleans database records** (SQL DELETE via ingestor pod)
-5. ✅ Deletes application code
-6. ✅ Deletes Kubernetes manifests
-7. ✅ Deletes ArgoCD config
-8. ✅ Commits changes to Git
+1.  Deletes ArgoCD application
+2.  Deletes Kubernetes namespace (waits for termination)
+3.  Force-deletes PersistentVolume
+4.  **Cleans database records** (SQL DELETE via ingestor pod)
+5.  Deletes application code
+6.  Deletes Kubernetes manifests
+7.  Deletes ArgoCD config
+8.  Commits changes to Git
 
-## 📊 Monitoring
+## Monitoring
 
 ### Prometheus
 ```bash
@@ -145,7 +145,7 @@ kubectl port-forward -n monitoring svc/grafana 3000:80
 ```
 Access: http://localhost:3000
 
-## 🔧 Development
+## Development
 
 ### Rebuild Frontend
 ```bash
@@ -175,7 +175,7 @@ kubectl logs -n default -l app=crypto-ingestor --tail=50
 kubectl logs -n default -l app=crypto-frontend --tail=50
 ```
 
-## 🗃️ Database
+## Database
 
 SQLite database located at `/data/crypto.db` (shared PVC)
 
@@ -197,7 +197,7 @@ kubectl exec -n default deployment/crypto-ingestor -- \
   sqlite3 /data/crypto.db "SELECT * FROM crypto_prices ORDER BY id DESC LIMIT 10;"
 ```
 
-## 🎯 API Endpoints
+## API Endpoints
 
 ### GET /api/cryptos
 Returns list of available cryptocurrencies
@@ -232,7 +232,7 @@ Returns price history (default: last 20 records)
 ]
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Frontend shows no data
 ```bash
@@ -264,7 +264,7 @@ kubectl patch application btc-collector -n argocd \
   --type merge -p '{"operation":{"initiatedBy":{"username":"admin"},"sync":{"revision":"HEAD"}}}'
 ```
 
-## 📝 Project Structure
+## Project Structure
 
 ```
 crypto-platform-ops/
@@ -287,14 +287,14 @@ crypto-platform-ops/
 └── README.md
 ```
 
-## 🎓 Learning Resources
+## Learning Resources
 
 - **GitOps**: ArgoCD automatically syncs from Git to Kubernetes
 - **Binance API**: [API Documentation](https://binance-docs.github.io/apidocs/)
 - **SQLite**: Lightweight database, perfect for this use case
 - **k3d**: Lightweight Kubernetes in Docker
 
-## 🤝 Contributing
+## Contributing
 
 This is a learning/demo project. Feel free to:
 - Add more cryptocurrencies
@@ -302,6 +302,6 @@ This is a learning/demo project. Feel free to:
 - Add alerting capabilities
 - Implement backtesting features
 
-## 📄 License
+## License
 
 MIT
