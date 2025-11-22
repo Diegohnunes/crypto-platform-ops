@@ -150,9 +150,21 @@ spec:
 
 
     print(f"\nStep 10/11: Waiting for pod to be ready...")
-    print(f"   Timeout: 60 seconds")
+    print(f"   Timeout: 120 seconds")
     try:
-        run_command(f"kubectl wait --for=condition=Ready pod -l app={name} -n {namespace} --timeout=60s", cwd=base_dir)
+        # First wait for deployment to be created by ArgoCD
+        print(f"   Waiting for deployment {name} to be created...")
+        for _ in range(30):
+            check_deploy = run_command(f"kubectl get deployment -n {namespace} {name}", check=False)
+            if "NotFound" not in check_deploy and "not found" not in check_deploy and name in check_deploy:
+                print(f"   Deployment created")
+                break
+            time.sleep(2)
+        else:
+            print(f"   Warning: Deployment not found after 60s")
+
+        # Then wait for pod
+        run_command(f"kubectl wait --for=condition=Ready pod -l app={name} -n {namespace} --timeout=120s", cwd=base_dir)
         print(f"   Pod is ready!")
         
 
