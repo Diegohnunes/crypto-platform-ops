@@ -135,18 +135,18 @@ spec:
     generate_file(env, "argocd-app.yaml.j2", output_apps_dir, f"{name}.yaml", context)
 
 
-    print("\nStep 8/11: Deploying to Kubernetes via ArgoCD...")
-    run_command(f"kubectl apply -f gitops/apps/{name}.yaml", cwd=base_dir)
-    time.sleep(2)
-    run_command(f"kubectl -n argocd annotate application {name} argocd.argoproj.io/refresh=hard --overwrite", cwd=base_dir)
-    print(f"   ArgoCD application deployed")
-
-
-    print("\nStep 9/11: Committing to Git...")
+    print("\nStep 8/11: Committing to Git...")
     run_command("git add .", cwd=base_dir)
     run_command(f'git commit -m "feat(idp): add {name} service for {coin}"', cwd=base_dir, check=False)
     run_command("git push origin main", cwd=base_dir)
     print(f"   Changes pushed to Git")
+
+
+    print("\nStep 9/11: Deploying to Kubernetes via ArgoCD...")
+    run_command(f"kubectl apply -f gitops/apps/{name}.yaml", cwd=base_dir)
+    time.sleep(5) # Wait a bit for ArgoCD to detect the app
+    run_command(f"kubectl -n argocd annotate application {name} argocd.argoproj.io/refresh=hard --overwrite", cwd=base_dir)
+    print(f"   ArgoCD application deployed")
 
 
     print(f"\nStep 10/11: Waiting for pod to be ready...")
