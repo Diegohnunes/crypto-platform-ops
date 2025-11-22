@@ -20,34 +20,50 @@ resource "grafana_dashboard" "btc_collector_apm" {
         type = "stat"
         gridPos = { h = 6, w = 6, x = 0, y = 0 }
         targets = [{
-          datasource = { uid = var.prometheus_datasource_uid }
+          datasource = { 
+            type = "prometheus"
+            uid = var.prometheus_datasource_uid 
+          }
           expr = "btc_collector_up"
           refId = "A"
-          legendFormat = "btc_collector"
+          legendFormat = ""
+          instant = false
+          range = true
         }]
         fieldConfig = {
           defaults = {
+            unit = "none"
+            decimals = 0
             thresholds = {
               mode = "absolute"
               steps = [
-                { value = 0, color = "red" },
+                { value = null, color = "red" },
                 { value = 1, color = "green" }
               ]
             }
             mappings = [
-              { type = "value", value = "0", text = "DOWN" },
-              { type = "value", value = "1", text = "UP" }
+              { 
+                type = "value"
+                options = {
+                  "0" = { text = "DOWN", color = "red", index = 0 }
+                  "1" = { text = "UP", color = "green", index = 1 }
+                }
+              }
             ]
           }
+          overrides = []
         }
         options = {
           reduceOptions = {
             values = false
+            fields = ""
             calcs = ["lastNotNull"]
           }
+          orientation = "auto"
           textMode = "auto"
           colorMode = "background"
           graphMode = "none"
+          justifyMode = "auto"
         }
       },
       
