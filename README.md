@@ -38,23 +38,23 @@ A fully automated Internal Developer Platform (IDP) for crypto price monitoring 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     ops-cli (Internal Developer Platform)        │
+│                     ops-cli (Internal Developer Platform)       │
 │  create-service: Code Gen → Docker → K8s → ArgoCD → Dashboard   │
 │  rm-service: Clean removal of all resources                     │
 └─────────────────────────────────────────────────────────────────┘
                                   │
                                   ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│                         K3d Cluster (devlab)                     │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐│
-│  │  BTC Collector   │  │  Crypto Ingestor │  │ Crypto Frontend││
-│  │  (Binance API)   │→ │  (SQLite Writer) │→ │  (React SPA)   ││
-│  └──────────────────┘  └──────────────────┘  └────────────────┘│
-│                                                                  │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐│
-│  │   Prometheus     │  │     Grafana      │  │    ArgoCD      ││
-│  │  (Metrics Store) │→ │  (Dashboards)    │  │  (GitOps CD)   ││
-│  └──────────────────┘  └──────────────────┘  └────────────────┘│
+│                         K3d Cluster (devlab)                    │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐ │
+│  │  BTC Collector   │  │  Crypto Ingestor │  │ Crypto Frontend│ │
+│  │  (Binance API)   │→ │  (SQLite Writer) │→ │  (React SPA)   │ │
+│  └──────────────────┘  └──────────────────┘  └────────────────┘ │
+│                                                                 │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐ │
+│  │   Prometheus     │  │     Grafana      │  │    ArgoCD      │ │
+│  │  (Metrics Store) │→ │  (Dashboards)    │  │  (GitOps CD)   │ │
+│  └──────────────────┘  └──────────────────┘  └────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
                                   │
                                   ↓
