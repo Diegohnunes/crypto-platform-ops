@@ -33,7 +33,7 @@ spec:
               mountPath: /data
       containers:
         - name: btc-collector
-          image: diegohnunes/btc-collector:v2.1
+          image: diegohnunes/btc-collector:v2.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
