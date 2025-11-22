@@ -1,4 +1,4 @@
-module eth-collector
+module sol-collector
 
 go 1.23
 

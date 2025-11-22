@@ -29,7 +29,7 @@ var (
 	// Service health
 	serviceUp = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Name: "eth_collector_up",
+			Name: "sol_collector_up",
 			Help: "Service availability (1 = up, 0 = down)",
 		},
 	)
@@ -37,7 +37,7 @@ var (
 	// HTTP Request metrics (RED pattern)
 	httpRequestsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "eth_collector_http_requests_total",
+			Name: "sol_collector_http_requests_total",
 			Help: "Total HTTP requests",
 		},
 		[]string{"method", "endpoint", "status"},
@@ -45,7 +45,7 @@ var (
 
 	httpRequestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "eth_collector_http_request_duration_seconds",
+			Name:    "sol_collector_http_request_duration_seconds",
 			Help:    "HTTP request duration in seconds",
 			Buckets: []float64{.001, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 		},
@@ -55,21 +55,21 @@ var (
 	// Business metrics
 	dataCollectionTotal = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "eth_collector_data_collection_total",
+			Name: "sol_collector_data_collection_total",
 			Help: "Total data points collected",
 		},
 	)
 
 	dataCollectionErrors = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "eth_collector_data_collection_errors_total",
+			Name: "sol_collector_data_collection_errors_total",
 			Help: "Total data collection errors",
 		},
 	)
 
 	apiCallsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "eth_collector_api_calls_total",
+			Name: "sol_collector_api_calls_total",
 			Help: "Total API calls to external services",
 		},
 		[]string{"service", "status"},
@@ -289,7 +289,7 @@ func backfillHistoricalData(client *BinanceClient, coin string) error {
 func main() {
 	coin := strings.ToUpper(os.Getenv("COIN"))
 	if coin == "" {
-		coin = "ETH"
+		coin = "SOL"
 	}
 	
 	log.Printf("Starting %s Collector (Binance API v2.0)...", coin)
