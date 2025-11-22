@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: eth-collector
-  namespace: eth-app
+  namespace: default
   labels:
     app: eth-collector
     coin: ETH

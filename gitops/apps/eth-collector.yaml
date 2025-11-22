@@ -13,7 +13,7 @@ spec:
     path: gitops/manifests/eth-collector
   destination:
     server: https://kubernetes.default.svc
-    namespace: eth-app
+    namespace: default
   syncPolicy:
     automated:
       prune: true

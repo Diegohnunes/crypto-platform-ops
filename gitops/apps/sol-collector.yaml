@@ -13,7 +13,7 @@ spec:
     path: gitops/manifests/sol-collector
   destination:
     server: https://kubernetes.default.svc
-    namespace: sol-app
+    namespace: default
   syncPolicy:
     automated:
       prune: true

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sol-collector
-  namespace: sol-app
+  namespace: default
   labels:
     app: sol-collector
     coin: SOL

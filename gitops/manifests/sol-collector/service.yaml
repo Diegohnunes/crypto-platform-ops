@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sol-collector
-  namespace: sol-app
+  namespace: default
   labels:
     app: sol-collector
 spec:

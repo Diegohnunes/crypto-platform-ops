@@ -118,7 +118,7 @@ def create_service_command(name, coin, service_type):
     output_manifests_dir = os.path.join(base_dir, "gitops", "manifests", name)
     output_apps_dir = os.path.join(base_dir, "gitops", "apps")
     output_code_dir = os.path.join(base_dir, "apps", name)
-    namespace = f"{coin.lower()}-app"
+    namespace = "default"  # All collectors now run in default namespace
 
     # Context for templates
     context = {
@@ -157,64 +157,8 @@ def create_service_command(name, coin, service_type):
     print(f"   Image imported to k3d")
 
 
-    print(f"\nStep 4/11: Creating namespace {namespace}...")
-    result = run_command(f"kubectl create namespace {namespace}", check=False)
-    if "already exists" in result:
-        print(f"   Namespace already exists")
-    else:
-        print(f"   Namespace created")
-
-
-    print(f"\nStep 5/11: Creating PersistentVolume and PVC...")
-    pv_name = f"crypto-pv-{coin.lower()}"
-    
-
-    pv_exists = run_command(f"kubectl get pv {pv_name}", check=False)
-    if pv_name not in pv_exists:
-
-        pv_yaml = f"""---
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: {pv_name}
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteMany
-  hostPath:
-    path: "/tmp/crypto-data"
-"""
-        with open(f"/tmp/{pv_name}.yaml", "w") as f:
-            f.write(pv_yaml)
-        run_command(f"kubectl apply -f /tmp/{pv_name}.yaml")
-        print(f"   PV created: {pv_name}")
-    else:
-        print(f"   PV already exists: {pv_name}")
-
-
-    pvc_yaml = f"""---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: crypto-shared-storage
-  namespace: {namespace}
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 1Gi
-  volumeName: {pv_name}
-"""
-    with open(f"/tmp/pvc-{namespace}.yaml", "w") as f:
-        f.write(pvc_yaml)
-    run_command(f"kubectl apply -f /tmp/pvc-{namespace}.yaml")
-    print(f"   PVC created in {namespace}")
+    print(f"\nStep 5/11: Skipping namespace/PV creation (using shared default namespace)...")
+    print(f"   All services use shared crypto-shared-storage-v2 PVC in default namespace")
 
 
     print("\nStep 6/11: Generating Kubernetes manifests...")

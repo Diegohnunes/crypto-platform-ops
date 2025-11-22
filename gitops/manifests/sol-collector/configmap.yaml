@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: sol-collector-config
-  namespace: sol-app
+  namespace: default
 data:
   COIN: "SOL"
   SERVICE_TYPE: "collector"
