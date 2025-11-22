@@ -23,16 +23,16 @@ def rm_service_command(name, coin, service_type):
     pv_name = f"crypto-pv-{coin.lower()}"
 
 
-    print("Step 1/9: Suspending ArgoCD auto-sync...")
+    print("Step 1/10: Suspending ArgoCD auto-sync...")
     run_command(f"kubectl patch application {name} -n argocd --type=merge -p '{{\"spec\":{{\"syncPolicy\":null}}}}'", check=False)
     print(f"   ArgoCD auto-sync suspended")
 
-    print("\nStep 2/9: Deleting ArgoCD application...")
+    print("\nStep 2/10: Deleting ArgoCD application...")
     run_command(f"kubectl delete application -n argocd {name}", check=False)
     print(f"   ArgoCD application deleted")
 
 
-    print(f"\nStep 3/9: Deleting namespace {namespace}...")
+    print(f"\nStep 3/10: Deleting namespace {namespace}...")
     run_command(f"kubectl delete namespace {namespace} --timeout=60s", check=False)
     
 
@@ -57,7 +57,7 @@ def rm_service_command(name, coin, service_type):
          print(f"   Namespace {namespace} is still terminating (likely stuck on finalizers)")
 
 
-    print("\nStep 4/9: Deleting PersistentVolume...")
+    print("\nStep 4/10: Deleting PersistentVolume...")
     # Force delete PV even if it's in Released state
     run_command(f"kubectl delete pv {pv_name} --force --grace-period=0", check=False)
     
@@ -74,7 +74,7 @@ def rm_service_command(name, coin, service_type):
 
 
 
-    print(f"\nStep 5/9: Cleaning database records...")
+    print(f"\nStep 5/10: Cleaning database records...")
     # Clean up database entries for this coin
     cleanup_script = f"""import sqlite3
 import os
@@ -131,7 +131,7 @@ else:
 
 
 
-    print(f"\nStep 6/9: Deleting application code...")
+    print(f"\nStep 6/10: Deleting application code...")
     app_dir = os.path.join(base_dir, "apps", name)
     if os.path.exists(app_dir):
         import shutil
@@ -141,7 +141,7 @@ else:
         print(f"   Directory doesn't exist: apps/{name}/")
 
 
-    print(f"\nStep 7/9: Deleting manifests...")
+    print(f"\nStep 7/10: Deleting manifests...")
     manifests_dir = os.path.join(base_dir, "gitops", "manifests", name)
     if os.path.exists(manifests_dir):
         import shutil
@@ -151,7 +151,7 @@ else:
         print(f"   Directory doesn't exist")
 
 
-    print(f"\nStep 8/9: Deleting ArgoCD app file...")
+    print(f"\nStep 8/10: Deleting ArgoCD app file...")
     argocd_file = os.path.join(base_dir, "gitops", "apps", f"{name}.yaml")
     if os.path.exists(argocd_file):
         os.remove(argocd_file)
@@ -160,11 +160,35 @@ else:
         print(f"   File doesn't exist")
 
 
-    print(f"\nStep 9/9: Committing to Git...")
+    print(f"\nStep 9/10: Committing to Git...")
     run_command("git add .", cwd=base_dir)
     run_command(f'git commit -m "feat(idp): remove {name} service"', cwd=base_dir, check=False)
     run_command("git push origin main", cwd=base_dir)
     print(f"   Changes pushed to Git")
+
+
+    print(f"\nStep 10/10: Post-removal verification...")
+    print(f"   Ensuring no resources were recreated by race conditions...")
+    
+    # Verify Namespace
+    check_ns = run_command(f"kubectl get namespace {namespace}", check=False)
+    if namespace in check_ns and "NotFound" not in check_ns:
+        print(f"   ⚠️  Namespace {namespace} reappeared! Deleting again...")
+        run_command(f"kubectl delete namespace {namespace} --force --grace-period=0", check=False)
+    
+    # Verify PV
+    check_pv = run_command(f"kubectl get pv {pv_name}", check=False)
+    if pv_name in check_pv and "NotFound" not in check_pv:
+        print(f"   ⚠️  PV {pv_name} reappeared! Deleting again...")
+        run_command(f"kubectl delete pv {pv_name} --force --grace-period=0", check=False)
+
+    # Verify ArgoCD App
+    check_app = run_command(f"kubectl get application -n argocd {name}", check=False)
+    if name in check_app and "NotFound" not in check_app:
+        print(f"   ⚠️  ArgoCD app {name} reappeared! Deleting again...")
+        run_command(f"kubectl delete application -n argocd {name} --force --grace-period=0", check=False)
+        
+    print(f"   Verification complete.")
 
 
     print(f"\n{'='*60}")
