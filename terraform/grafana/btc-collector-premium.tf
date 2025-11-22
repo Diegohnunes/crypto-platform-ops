@@ -24,25 +24,32 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 99
         title = ""
         type = "text"
-        gridPos = { h = 3, w = 24, x = 0, y = 0 }
+        gridPos = { h = 4, w = 24, x = 0, y = 0 }
         options = {
           mode = "html"
           content = <<-HTML
+            <style>
+              @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+              }
+            </style>
             <div style="
               background: linear-gradient(135deg, rgba(30, 40, 60, 0.95) 0%, rgba(20, 30, 48, 0.95) 100%);
               border: 1px solid rgba(100, 150, 255, 0.3);
               border-radius: 12px;
-              padding: 20px 30px;
+              padding: 25px 35px;
               box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
               backdrop-filter: blur(10px);
               -webkit-backdrop-filter: blur(10px);
               margin: 10px;
+              height: 100%;
             ">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
                 <div>
                   <h1 style="
                     margin: 0;
-                    font-size: 28px;
+                    font-size: 32px;
                     font-weight: 700;
                     background: linear-gradient(90deg, #64B5F6 0%, #42A5F5 50%, #2196F3 100%);
                     -webkit-background-clip: text;
@@ -50,17 +57,17 @@ resource "grafana_dashboard" "btc_collector_premium" {
                     letter-spacing: 1px;
                   ">BTC Collector - Application Performance Monitoring</h1>
                   <p style="
-                    margin: 8px 0 0 0;
+                    margin: 10px 0 0 0;
                     color: rgba(255, 255, 255, 0.7);
-                    font-size: 14px;
+                    font-size: 15px;
                     font-weight: 400;
-                  ">Real-time metrics & observability dashboard • Powered by Prometheus & Grafana</p>
+                  ">Real-time metrics &amp; observability dashboard • Powered by Prometheus &amp; Grafana</p>
                 </div>
                 <div style="
                   display: flex;
                   align-items: center;
                   gap: 12px;
-                  padding: 12px 24px;
+                  padding: 14px 26px;
                   background: rgba(76, 175, 80, 0.15);
                   border: 1px solid rgba(76, 175, 80, 0.4);
                   border-radius: 8px;
@@ -76,18 +83,12 @@ resource "grafana_dashboard" "btc_collector_premium" {
                   <span style="
                     color: #4CAF50;
                     font-weight: 600;
-                    font-size: 16px;
+                    font-size: 17px;
                     letter-spacing: 0.5px;
                   ">SYSTEM OPERATIONAL</span>
                 </div>
               </div>
             </div>
-            <style>
-              @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.5; }
-              }
-            </style>
           HTML
         }
         transparent = true
@@ -98,7 +99,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 100
         title = "System Overview"
         type = "row"
-        gridPos = { h = 1, w = 24, x = 0, y = 3 }
+        gridPos = { h = 1, w = 24, x = 0, y = 4 }
         collapsed = false
       },
 
@@ -108,7 +109,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 1
         title = "Service Status"
         type = "stat"
-        gridPos = { h = 8, w = 6, x = 0, y = 4 }
+        gridPos = { h = 8, w = 6, x = 0, y = 5 }
         targets = [{
           datasource = { 
             type = "prometheus"
@@ -165,7 +166,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 2
         title = "Bitcoin Price"
         type = "stat"
-        gridPos = { h = 8, w = 6, x = 6, y = 4 }
+        gridPos = { h = 8, w = 6, x = 6, y = 5 }
         targets = [{
           datasource = { 
             type = "prometheus"
@@ -213,7 +214,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 3
         title = ""
         type = "stat"
-        gridPos = { h = 8, w = 6, x = 12, y = 4 }
+        gridPos = { h = 8, w = 6, x = 12, y = 5 }
         targets = [{
           datasource = { 
             type = "prometheus"
@@ -261,7 +262,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 4
         title = ""
         type = "gauge"
-        gridPos = { h = 8, w = 6, x = 18, y = 4 }
+        gridPos = { h = 8, w = 6, x = 18, y = 5 }
         targets = [{
           datasource = { 
             type = "prometheus"
@@ -309,7 +310,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 101
         title = "⚡ Performance & Latency"
         type = "row"
-        gridPos = { h = 1, w = 24, x = 0, y = 12 }
+        gridPos = { h = 1, w = 24, x = 0, y = 13 }
         collapsed = false
       },
       
@@ -318,7 +319,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 5
         title = "🌐 HTTP Request Rate"
         type = "timeseries"
-        gridPos = { h = 9, w = 12, x = 0, y = 13 }
+        gridPos = { h = 9, w = 12, x = 0, y = 14 }
         targets = [{
           datasource = { 
             type = "prometheus"
@@ -375,7 +376,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 6
         title = "⏱️ HTTP Response Time (Percentiles)"
         type = "timeseries"
-        gridPos = { h = 9, w = 12, x = 12, y = 13 }
+        gridPos = { h = 9, w = 12, x = 12, y = 14 }
         targets = [
           {
             datasource = { 
@@ -459,7 +460,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 102
         title = "📦 Data Collection & Reliability"
         type = "row"
-        gridPos = { h = 1, w = 24, x = 0, y = 22 }
+        gridPos = { h = 1, w = 24, x = 0, y = 23 }
         collapsed = false
       },
       
@@ -468,7 +469,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 7
         title = "📊 Data Collection Metrics"
         type = "timeseries"
-        gridPos = { h = 9, w = 16, x = 0, y = 23 }
+        gridPos = { h = 9, w = 16, x = 0, y = 24 }
         targets = [
           {
             datasource = { 
@@ -550,7 +551,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 8
         title = "🔄 API Call Status Distribution"
         type = "piechart"
-        gridPos = { h = 9, w = 8, x = 16, y = 23 }
+        gridPos = { h = 9, w = 8, x = 16, y = 24 }
         targets = [{
           datasource = { 
             type = "prometheus"
@@ -604,7 +605,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 103
         title = "💰 Business Metrics"
         type = "row"
-        gridPos = { h = 1, w = 24, x = 0, y = 32 }
+        gridPos = { h = 1, w = 24, x = 0, y = 33 }
         collapsed = false
       },
       
@@ -613,7 +614,7 @@ resource "grafana_dashboard" "btc_collector_premium" {
         id = 9
         title = "₿ Bitcoin Price (USDT)"
         type = "timeseries"
-        gridPos = { h = 10, w = 24, x = 0, y = 33 }
+        gridPos = { h = 10, w = 24, x = 0, y = 34 }
         targets = [{
           datasource = { 
             type = "prometheus"
