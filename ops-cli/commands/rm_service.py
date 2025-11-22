@@ -23,12 +23,16 @@ def rm_service_command(name, coin, service_type):
     pv_name = f"crypto-pv-{coin.lower()}"
 
 
-    print("Step 1/7: Deleting ArgoCD application...")
+    print("Step 1/9: Suspending ArgoCD auto-sync...")
+    run_command(f"kubectl patch application {name} -n argocd --type=merge -p '{{\"spec\":{{\"syncPolicy\":null}}}}'", check=False)
+    print(f"   ArgoCD auto-sync suspended")
+
+    print("\nStep 2/9: Deleting ArgoCD application...")
     run_command(f"kubectl delete application -n argocd {name}", check=False)
     print(f"   ArgoCD application deleted")
 
 
-    print(f"\nStep 2/7: Deleting namespace {namespace}...")
+    print(f"\nStep 3/9: Deleting namespace {namespace}...")
     run_command(f"kubectl delete namespace {namespace} --timeout=60s", check=False)
     
 

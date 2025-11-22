@@ -174,13 +174,27 @@ spec:
     try:
         generate_file(env, "dashboard.tf.j2", terraform_dir, f"{name}.tf", context)
         
-        # Run terraform apply
-        run_command("terraform apply -auto-approve", cwd=terraform_dir)
-        print(f"   Dashboard created successfully!")
-        print(f"   Access at: http://localhost:3000/d/{name}-apm")
+        # Check if Grafana is accessible before running Terraform
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        grafana_accessible = sock.connect_ex(('localhost', 3000)) == 0
+        sock.close()
+        
+        if not grafana_accessible:
+            print(f"   ⚠️  Grafana not accessible on localhost:3000")
+            print(f"   ℹ️  Dashboard config created but not applied")
+            print(f"   ℹ️  Run manually: cd terraform/grafana && terraform apply")
+        else:
+            # Run terraform apply
+            run_command("terraform apply -auto-approve", cwd=terraform_dir)
+            print(f"   ✅ Dashboard created successfully!")
+            print(f"   📊 Access at: http://localhost:3000/d/{name}-apm")
     except Exception as e:
-        print(f"   Warning: Dashboard creation failed: {e}")
-        print(f"   Service is operational, but manual dashboard setup may be needed")
+        print(f"   ⚠️  Dashboard creation skipped: {str(e)}")
+        print(f"   ℹ️  Service is operational")
+        print(f"   ℹ️  Create dashboard manually later if needed")
+
 
 
     print(f"\n{'='*60}")
