@@ -64,4 +64,4 @@ spec:
       volumes:
         - name: shared-data
           persistentVolumeClaim:
-            claimName: crypto-shared-storage
+            claimName: crypto-shared-storage-v2
