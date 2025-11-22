@@ -19,62 +19,28 @@ def rm_service_command(name, coin, service_type):
     print(f"{'='*60}\n")
 
     base_dir = os.getcwd()
-    namespace = f"{coin.lower()}-app"
-    pv_name = f"crypto-pv-{coin.lower()}"
+    namespace = "default"  # All services now run in default namespace
 
 
-    print("Step 1/10: Suspending ArgoCD auto-sync...")
+    print("Step 1/11: Suspending ArgoCD auto-sync...")
     run_command(f"kubectl patch application {name} -n argocd --type=merge -p '{{\"spec\":{{\"syncPolicy\":null}}}}'", check=False)
     print(f"   ArgoCD auto-sync suspended")
 
-    print("\nStep 2/10: Deleting ArgoCD application...")
+    print("\nStep 2/11: Deleting ArgoCD application...")
     run_command(f"kubectl delete application -n argocd {name}", check=False)
     print(f"   ArgoCD application deleted")
 
 
-    print(f"\nStep 3/10: Deleting namespace {namespace}...")
-    run_command(f"kubectl delete namespace {namespace} --timeout=60s", check=False)
-    
-
-    import time
-    print(f"   Waiting for namespace {namespace} to disappear...")
-    for _ in range(30):
-
-        result = subprocess.run(
-            f"kubectl get namespace {namespace}", 
-            shell=True, 
-            capture_output=True, 
-            text=True
-        )
-        
-        if result.returncode != 0:
-            if "NotFound" in result.stderr or "not found" in result.stderr:
-                print(f"   Namespace deleted")
-                break
-        
-        time.sleep(2)
-    else:
-         print(f"   Namespace {namespace} is still terminating (likely stuck on finalizers)")
-
-
-    print("\nStep 4/10: Deleting PersistentVolume...")
-    # Force delete PV even if it's in Released state
-    run_command(f"kubectl delete pv {pv_name} --force --grace-period=0", check=False)
-    
-    # Wait a moment for deletion
-    import time
-    time.sleep(2)
-    
-    # Verify it's gone
-    check_pv = run_command(f"kubectl get pv {pv_name}", check=False)
-    if pv_name in check_pv and "NotFound" not in check_pv:
-        print(f"   Warning: PV {pv_name} may still exist")
-    else:
-        print(f"   PV deleted")
+    print(f"\nStep 3/11: Deleting Kubernetes resources in {namespace}...")
+    # Delete deployment, service, configmap
+    run_command(f"kubectl delete deployment {name} -n {namespace}", check=False)
+    run_command(f"kubectl delete service {name} -n {namespace}", check=False)
+    run_command(f"kubectl delete configmap {name}-config -n {namespace}", check=False)
+    print(f"   Kubernetes resources deleted")
 
 
 
-    print(f"\nStep 5/10: Cleaning database records...")
+    print(f"\nStep 4/11: Cleaning database records...")
     # Clean up database entries for this coin
     cleanup_script = f"""import sqlite3
 import os
@@ -130,8 +96,12 @@ else:
             os_module.remove(temp_script)
 
 
+    print(f"\nStep 5/11: Restarting frontend to refresh cache...")
+    run_command("kubectl rollout restart deployment/crypto-frontend -n default", check=False)
+    print(f"   Frontend restarted (SQLite cache will be refreshed)")
 
-    print(f"\nStep 6/10: Deleting application code...")
+
+    print(f"\nStep 6/11: Deleting application code...")
     app_dir = os.path.join(base_dir, "apps", name)
     if os.path.exists(app_dir):
         import shutil
@@ -141,7 +111,7 @@ else:
         print(f"   Directory doesn't exist: apps/{name}/")
 
 
-    print(f"\nStep 7/10: Deleting manifests...")
+    print(f"\nStep 7/11: Deleting manifests...")
     manifests_dir = os.path.join(base_dir, "gitops", "manifests", name)
     if os.path.exists(manifests_dir):
         import shutil
@@ -151,7 +121,7 @@ else:
         print(f"   Directory doesn't exist")
 
 
-    print(f"\nStep 8/10: Deleting ArgoCD app file...")
+    print(f"\nStep 8/11: Deleting ArgoCD app file...")
     argocd_file = os.path.join(base_dir, "gitops", "apps", f"{name}.yaml")
     if os.path.exists(argocd_file):
         os.remove(argocd_file)
@@ -160,11 +130,33 @@ else:
         print(f"   File doesn't exist")
 
 
-    print(f"\nStep 8a/10: Deleting Terraform dashboard...")
+    print(f"\nStep 9/11: Destroying Grafana dashboard via Terraform...")
     tf_file = os.path.join(base_dir, "terraform", "grafana", f"{name}.tf")
+    
     if os.path.exists(tf_file):
+        # Run terraform destroy for this specific dashboard
+        terraform_dir = os.path.join(base_dir, "terraform", "grafana")
+        resource_name = f"grafana_dashboard.{name.replace('-', '_')}_apm"
+        
+        try:
+            destroy_output = run_command(
+                f"cd {terraform_dir} && terraform destroy -auto-approve -target={resource_name}",
+                check=False
+            )
+            
+            if "Destroy complete!" in destroy_output or "destroyed" in destroy_output.lower():
+                print(f"   ✅ Grafana dashboard destroyed: {name}")
+            else:
+                print(f"   ⚠️  Dashboard destroy completed (check Grafana to confirm)")
+                
+        except Exception as e:
+            print(f"   ⚠️  Terraform destroy failed (dashboard may not exist): {e}")
+        
+        # Delete the .tf file after destroying
         os.remove(tf_file)
         print(f"   Deleted: terraform/grafana/{name}.tf")
+    else:
+        print(f"   No Terraform file found (skipping destroy)")
     
     # Also check legacy path
     tf_legacy = os.path.join(base_dir, "terraform", "grafana", "dashboards", f"{name}.tf")
@@ -173,27 +165,21 @@ else:
         print(f"   Deleted: terraform/grafana/dashboards/{name}.tf")
 
 
-    print(f"\nStep 9/10: Committing to Git...")
+    print(f"\nStep 10/11: Committing to Git...")
     run_command("git add .", cwd=base_dir)
     run_command(f'git commit -m "feat(idp): remove {name} service"', cwd=base_dir, check=False)
     run_command("git push origin main", cwd=base_dir)
     print(f"   Changes pushed to Git")
 
 
-    print(f"\nStep 10/10: Post-removal verification...")
+    print(f"\nStep 11/11: Post-removal verification...")
     print(f"   Ensuring no resources were recreated by race conditions...")
     
-    # Verify Namespace
-    check_ns = run_command(f"kubectl get namespace {namespace}", check=False)
-    if namespace in check_ns and "NotFound" not in check_ns:
-        print(f"   ⚠️  Namespace {namespace} reappeared! Deleting again...")
-        run_command(f"kubectl delete namespace {namespace} --force --grace-period=0", check=False)
-    
-    # Verify PV
-    check_pv = run_command(f"kubectl get pv {pv_name}", check=False)
-    if pv_name in check_pv and "NotFound" not in check_pv:
-        print(f"   ⚠️  PV {pv_name} reappeared! Deleting again...")
-        run_command(f"kubectl delete pv {pv_name} --force --grace-period=0", check=False)
+    # Verify deployment is gone
+    check_deploy = run_command(f"kubectl get deployment {name} -n {namespace}", check=False)
+    if name in check_deploy and "NotFound" not in check_deploy:
+        print(f"   ⚠️  Deployment {name} reappeared! Deleting again...")
+        run_command(f"kubectl delete deployment {name} -n {namespace} --force --grace-period=0", check=False)
 
     # Verify ArgoCD App
     check_app = run_command(f"kubectl get application -n argocd {name}", check=False)
@@ -209,10 +195,13 @@ else:
     print(f"{'='*60}")
     print(f"\nWhat was deleted:")
     print(f"   • ArgoCD Application: {name}")
-    print(f"   • Namespace: {namespace}")
-    print(f"   • PersistentVolume: {pv_name}")
+    print(f"   • Kubernetes Deployment: {name} (namespace: {namespace})")
+    print(f"   • Database Records: {coin.upper()} cryptocurrency data")
+    print(f"   • Grafana Dashboard: {name}-apm")
     print(f"   • Application Code: apps/{name}/")
     print(f"   • Manifests: gitops/manifests/{name}/")
     print(f"   • ArgoCD Config: gitops/apps/{name}.yaml")
+    print(f"   • Terraform Config: terraform/grafana/{name}.tf")
+    print(f"\n📊 Frontend restarted to refresh cryptocurrency list")
     print(f"\nAll clean!")
     print("")
