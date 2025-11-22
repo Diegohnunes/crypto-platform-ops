@@ -247,8 +247,12 @@ def create_service_command(name, coin, service_type):
             print(f"   ℹ️  Create dashboard manually later if needed")
         else:
             print("   Applying Terraform configuration...")
+            # Resource name in template uses underscores (e.g. btc_collector_apm)
+            # but name variable has hyphens (e.g. btc-collector)
+            tf_resource_name = f"grafana_dashboard.{name.replace('-', '_')}_apm"
+            
             result = subprocess.run(
-                ["terraform", "apply", "-auto-approve", f"-target=grafana_dashboard.{name}_apm"],
+                ["terraform", "apply", "-auto-approve", f"-target={tf_resource_name}"],
                 cwd=os.path.join(base_dir, "terraform", "grafana"),
                 capture_output=True,
                 text=True,
