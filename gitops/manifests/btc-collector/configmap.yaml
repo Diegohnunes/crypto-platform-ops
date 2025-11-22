@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: btc-collector-config
+  namespace: default
+data:
+  COIN: "BTC"
+  SERVICE_TYPE: "collector"
+  LOG_LEVEL: "info"
