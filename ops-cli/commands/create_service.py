@@ -158,7 +158,7 @@ def create_service_command(name, coin, service_type):
 
 
     print(f"\nStep 4/10: Skipping namespace/PV creation (using shared default namespace)...")
-    print(f"   All services use shared crypto-shared-storage-v2 PVC in default namespace")
+    print(f"   All services use shared crypto-shared-storage-v3 PVC in {namespace} namespace")
 
 
     print("\nStep 5/10: Generating Kubernetes manifests...")
@@ -270,6 +270,11 @@ def create_service_command(name, coin, service_type):
             else:
                 print(f"   ✅ Grafana dashboard created: {name}-apm")
 
+
+    # Step 11/11: Restart frontend to ensure new data is visible
+    print("\nStep 11/11: Restarting frontend to refresh cache...")
+    run_command(f"kubectl rollout restart deployment/crypto-frontend -n {namespace}")
+    print("   Frontend restarted (SQLite cache will be refreshed)")
 
     print(f"\n{'='*60}")
     print(f"IDP: Service {name} created successfully!")
