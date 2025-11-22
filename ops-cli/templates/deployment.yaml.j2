@@ -22,6 +22,18 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - crypto-ingestor
+                topologyKey: "kubernetes.io/hostname"
       initContainers:
         - name: fix-permissions
           image: busybox

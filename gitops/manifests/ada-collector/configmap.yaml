@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ada-collector-config
-  namespace: default
-data:
-  COIN: "ADA"
-  SERVICE_TYPE: "collector"
-  LOG_LEVEL: "info"
