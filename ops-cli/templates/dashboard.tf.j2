@@ -1,34 +1,169 @@
-resource "grafana_dashboard" "{{name}}_apm" {
+resource "grafana_dashboard" "{{name|replace('-', '_')}}_apm" {
   config_json = jsonencode({
-    title       = "{{name}} - APM Dashboard"
+    title       = "{{coin}} - APM Dashboard"
     uid         = "{{name}}-apm"
-    tags        = ["apm", "{{coin}}", "collector", "terraform"]
+    tags        = ["premium", "apm", "{{coin}}", "monitoring"]
     timezone    = "browser"
     editable    = true
     refresh     = "30s"
     schemaVersion = 39
     time = {
-      from = "now-1m"
+      from = "now-5m"
       to   = "now"
     }
     
+    # Modern dark theme with custom background
+    style = "dark"
+    
+    # Dashboard-wide styling
+    graphTooltip = 1
+    
     panels = [
-      # Row 1: Service Health
+      # === HTML HEADER PANEL ===
+      {
+        id = 99
+        title = ""
+        type = "text"
+        gridPos = { h = 4, w = 24, x = 0, y = 0 }
+        options = {
+          mode = "html"
+          content = <<-HTML
+            <style>
+              /* Fonte Tecnológica */
+              @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+
+              /* --- CSS GLOBAL (Fundo da Página Inteira) --- */
+              .main-view, .dashboard-page, .dashboard-container {
+                background: radial-gradient(circle at 50% 0%, #1a202c 0%, #0b0c10 100%) !important;
+              }
+              
+              /* Grade de fundo sutil */
+              .dashboard-container::before {
+                content: "";
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background-image: 
+                  linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+                background-size: 40px 40px;
+                pointer-events: none;
+                z-index: 0;
+              }
+
+              /* Remove bordas do painel do Grafana para o Header flutuar */
+              div[data-panel-id] .panel-container {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+
+              /* Animação do ponto verde */
+              @keyframes pulse-ring {
+                0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+                70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+              }
+            </style>
+
+            <!-- CONTAINER DO HEADER -->
+            <div style="
+              width: 100%;
+              min-height: 80px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              background: rgba(20, 30, 48, 0.7); /* Fundo semi-transparente */
+              backdrop-filter: blur(12px); /* Efeito de vidro */
+              border-bottom: 1px solid rgba(100, 150, 255, 0.2); /* Borda inferior sutil */
+              border-radius: 6px;
+              padding: 0 30px;
+              box-sizing: border-box;
+              font-family: 'Rajdhani', sans-serif;
+              box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            ">
+
+              <!-- LADO ESQUERDO: Títulos -->
+              <div style="display: flex; flex-direction: column; justify-content: center;">
+                  <h1 style="
+                    margin: 0;
+                    font-size: 32px;
+                    font-weight: 700;
+                    color: #FFFFFF; /* Branco Sólido */
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    text-shadow: 0 0 15px rgba(100, 181, 246, 0.4); /* Brilho azulado leve */
+                    line-height: 1.2;
+                  ">{{coin}} Collector</h1>
+                
+                <div style="
+                  display: flex; 
+                  align-items: center; 
+                  gap: 10px; 
+                ">
+                  <span style="
+                    font-size: 14px; 
+                    color: #94a3b8; 
+                    font-weight: 500; 
+                    letter-spacing: 1px;
+                  ">APPLICATION MONITORING</span>
+                </div>
+              </div>
+
+              <!-- LADO DIREITO: Status -->
+              <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  padding: 8px 20px;
+                  background: rgba(16, 185, 129, 0.1);
+                  border: 1px solid rgba(16, 185, 129, 0.3);
+                  border-radius: 4px;
+                ">
+                  <div style="
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background: #10B981;
+                    animation: pulse-ring 2s infinite;
+                  "></div>
+                  <span style="
+                    color: #10B981;
+                    font-weight: 700;
+                    font-size: 16px;
+                    letter-spacing: 1px;
+                  ">SYSTEM ONLINE</span>
+                </div>
+              </div>
+            </div>
+          HTML
+        }
+        transparent = true
+      },
+      
+      # === ROW: HEADER WITH BIG STATS ===
+      {
+        id = 100
+        title = "System Overview"
+        type = "row"
+        gridPos = { h = 1, w = 24, x = 0, y = 4 }
+        collapsed = false
+      },
+
+      
+      # BIG STAT: Service Status (Premium Style)
       {
         id = 1
         title = "Service Status"
         type = "stat"
-        gridPos = { h = 6, w = 6, x = 0, y = 0 }
+        gridPos = { h = 8, w = 6, x = 0, y = 5 }
         targets = [{
           datasource = { 
             type = "prometheus"
             uid = var.prometheus_datasource_uid 
           }
-          expr = "{{name}}_up"
+          expr = "{{name|replace('-', '_')}}_up"
           refId = "A"
-          legendFormat = ""
-          instant = false
-          range = true
         }]
         fieldConfig = {
           defaults = {
@@ -37,8 +172,8 @@ resource "grafana_dashboard" "{{name}}_apm" {
             thresholds = {
               mode = "absolute"
               steps = [
-                { value = null, color = "red" },
-                { value = 1, color = "green" }
+                { value = null, color = "rgba(237, 46, 24, 0.3)" },
+                { value = 1, color = "rgba(50, 215, 75, 0.3)" }
               ]
             }
             mappings = [
@@ -46,7 +181,7 @@ resource "grafana_dashboard" "{{name}}_apm" {
                 type = "value"
                 options = {
                   "0" = { text = "DOWN", color = "red", index = 0 }
-                  "1" = { text = "UP", color = "green", index = 1 }
+                  "1" = { text = "HEALTHY", color = "green", index = 1 }
                 }
               }
             ]
@@ -59,271 +194,524 @@ resource "grafana_dashboard" "{{name}}_apm" {
             fields = ""
             calcs = ["lastNotNull"]
           }
-          orientation = "auto"
-          textMode = "auto"
-          colorMode = "background"
+          orientation = "horizontal"
+          textMode = "value"
+          colorMode = "background_gradient"
           graphMode = "none"
-          justifyMode = "auto"
+          justifyMode = "center"
+          text = {
+            titleSize = 16
+            valueSize = 48
+          }
         }
+        pluginVersion = "10.0.0"
+        transparent = false
       },
       
-      # Row 1: Throughput
+      # BIG STAT: {{coin}} Price (Gradient Background)
       {
         id = 2
-        title = "Data Collection Rate"
+        title = "{{coin}} Price"
         type = "stat"
-        gridPos = { h = 6, w = 6, x = 6, y = 0 }
+        gridPos = { h = 8, w = 6, x = 6, y = 5 }
         targets = [{
-          datasource = { uid = var.prometheus_datasource_uid }
-          expr = "rate({{name}}_data_collection_total[5m]) * 60"
+          datasource = { 
+            type = "prometheus"
+            uid = var.prometheus_datasource_uid 
+          }
+          expr = "crypto_price{symbol=\"{{coin}}\"}"
           refId = "A"
-          legendFormat = "Data points/min"
         }]
         fieldConfig = {
           defaults = {
-            unit = "ops"
-            color = { mode = "palette-classic" }
-          }
-        }
-        options = {
-          reduceOptions = {
-            values = false
-            calcs = ["lastNotNull"]
-          }
-          textMode = "auto"
-          colorMode = "value"
-          graphMode = "area"
-        }
-      },
-      
-      # Row 1: Error Rate
-      {
-        id = 3
-        title = "Error Rate"
-        type = "stat"
-        gridPos = { h = 6, w = 6, x = 12, y = 0 }
-        targets = [{
-          datasource = { uid = var.prometheus_datasource_uid }
-          expr = "rate({{name}}_data_collection_errors_total[5m]) * 60"
-          refId = "A"
-          legendFormat = "Errors/min"
-        }]
-        fieldConfig = {
-          defaults = {
-            unit = "ops"
+            unit = "currencyUSD"
+            decimals = 2
             thresholds = {
               mode = "absolute"
               steps = [
-                { value = 0, color = "green" },
-                { value = 0.1, color = "yellow" },
-                { value = 1, color = "red" }
+                { value = null, color = "rgba(255, 152, 0, 0.2)" },
+                { value = 50000, color = "rgba(255, 204, 0, 0.2)" },
+                { value = 80000, color = "rgba(76, 175, 80, 0.2)" }
               ]
             }
           }
+          overrides = []
         }
         options = {
           reduceOptions = {
             values = false
             calcs = ["lastNotNull"]
           }
-          textMode = "auto"
-          colorMode = "background"
+          orientation = "horizontal"
+          textMode = "value"
+          colorMode = "background_gradient"
           graphMode = "area"
+          justifyMode = "center"
+          text = {
+            titleSize = 16
+            valueSize = 36
+          }
         }
+        pluginVersion = "10.0.0"
+        transparent = false
       },
       
-      # Row 1: API Success Rate
+      # BIG STAT: Throughput (Data Collection Rate)
+      {
+        id = 3
+        title = ""
+        type = "stat"
+        gridPos = { h = 8, w = 6, x = 12, y = 5 }
+        targets = [{
+          datasource = { 
+            type = "prometheus"
+            uid = var.prometheus_datasource_uid 
+          }
+          expr = "rate({{name|replace('-', '_')}}_data_collection_total[5m]) * 60"
+          refId = "A"
+        }]
+        fieldConfig = {
+          defaults = {
+            unit = "ops"
+            decimals = 2
+            displayName = "💾 Data Points/min"
+            thresholds = {
+              mode = "absolute"
+              steps = [
+                { value = null, color = "rgba(96, 125, 139, 0.2)" },
+                { value = 0.5, color = "rgba(33, 150, 243, 0.2)" },
+                { value = 1, color = "rgba(0, 188, 212, 0.2)" }
+              ]
+            }
+          }
+          overrides = []
+        }
+        options = {
+          reduceOptions = {
+            values = false
+            calcs = ["lastNotNull"]
+          }
+          orientation = "horizontal"
+          textMode = "value_and_name"
+          colorMode = "background_gradient"
+          graphMode = "area"
+          justifyMode = "center"
+          text = {
+            titleSize = 16
+            valueSize = 32
+          }
+        }
+        pluginVersion = "10.0.0"
+      },
+      
+      # GAUGE: API Success Rate (Premium Gauge)
       {
         id = 4
-        title = "API Success Rate"
+        title = ""
         type = "gauge"
-        gridPos = { h = 6, w = 6, x = 18, y = 0 }
+        gridPos = { h = 8, w = 6, x = 18, y = 5 }
         targets = [{
-          datasource = { uid = var.prometheus_datasource_uid }
-          expr = "sum(rate({{name}}_api_calls_total{status=\"success\"}[5m])) / sum(rate({{name}}_api_calls_total[5m])) * 100"
+          datasource = { 
+            type = "prometheus"
+            uid = var.prometheus_datasource_uid 
+          }
+          expr = "sum(rate({{name|replace('-', '_')}}_api_calls_total{status=\"success\"}[5m])) / sum(rate({{name|replace('-', '_')}}_api_calls_total[5m])) * 100"
           refId = "A"
         }]
         fieldConfig = {
           defaults = {
             unit = "percent"
+            decimals = 2
+            displayName = "🎯 API Success Rate"
             min = 0
             max = 100
             thresholds = {
               mode = "absolute"
               steps = [
-                { value = 0, color = "red" },
-                { value = 90, color = "yellow" },
-                { value = 99, color = "green" }
+                { value = 0, color = "rgba(229, 57, 53, 0.8)" },
+                { value = 90, color = "rgba(255, 193, 7, 0.8)" },
+                { value = 95, color = "rgba(139, 195, 74, 0.8)" },
+                { value = 99, color = "rgba(76, 175, 80, 0.8)" }
               ]
             }
           }
+          overrides = []
         }
         options = {
           showThresholdLabels = false
           showThresholdMarkers = true
+          orientation = "auto"
+          reduceOptions = {
+            values = false
+            calcs = ["lastNotNull"]
+          }
+          text = {
+            titleSize = 16
+            valueSize = 28
+          }
         }
       },
       
-      # Row 2: HTTP Request Rate
+      # === ROW: PERFORMANCE METRICS ===
+      {
+        id = 101
+        title = "⚡ Performance & Latency"
+        type = "row"
+        gridPos = { h = 1, w = 24, x = 0, y = 13 }
+        collapsed = false
+      },
+      
+      # HTTP Request Rate (Modern Timeseries with Gradient)
       {
         id = 5
-        title = "HTTP Request Rate"
+        title = "🌐 HTTP Request Rate"
         type = "timeseries"
-        gridPos = { h = 8, w = 12, x = 0, y = 6 }
+        gridPos = { h = 9, w = 12, x = 0, y = 14 }
         targets = [{
-          datasource = { uid = var.prometheus_datasource_uid }
-          expr = "sum by(endpoint) (rate({{name}}_http_requests_total[5m]))"
+          datasource = { 
+            type = "prometheus"
+            uid = var.prometheus_datasource_uid 
+          }
+          expr = "sum by(endpoint) (rate({{name|replace('-', '_')}}_http_requests_total[5m]))"
           refId = "A"
           legendFormat = {% raw %}"{{endpoint}}"{% endraw %}
         }]
         fieldConfig = {
           defaults = {
             unit = "reqps"
+            color = { 
+              mode = "palette-classic"
+              seriesBy = "last"
+            }
             custom = {
+              lineWidth = 2
               lineInterpolation = "smooth"
               showPoints = "never"
-              fillOpacity = 10
+              fillOpacity = 25
+              gradientMode = "opacity"
+              spanNulls = true
+              axisPlacement = "auto"
+              axisLabel = "Requests/sec"
+              drawStyle = "line"
+              pointSize = 5
+            }
+            thresholds = {
+              mode = "absolute"
+              steps = [
+                { value = null, color = "green" }
+              ]
             }
           }
+          overrides = []
         }
         options = {
+          tooltip = {
+            mode = "multi"
+            sort = "desc"
+          }
           legend = {
+            showLegend = true
             displayMode = "table"
             placement = "bottom"
-            calcs = ["mean", "max"]
+            calcs = ["mean", "max", "last"]
           }
         }
       },
       
-      # Row 2: HTTP Response Time (p95)
+      # HTTP Response Time (Multi-Percentile)
       {
         id = 6
-        title = "HTTP Response Time (p95)"
+        title = "⏱️ HTTP Response Time (Percentiles)"
         type = "timeseries"
-        gridPos = { h = 8, w = 12, x = 12, y = 6 }
-        targets = [{
-          datasource = { uid = var.prometheus_datasource_uid }
-          expr = "histogram_quantile(0.95, sum by(endpoint, le) (rate({{name}}_http_request_duration_seconds_bucket[5m])))"
-          refId = "A"
-          legendFormat = {% raw %}"{{endpoint}} (p95)"{% endraw %}
-        }]
-        fieldConfig = {
-          defaults = {
-            unit = "s"
-            custom = {
-              lineInterpolation = "smooth"
-              showPoints = "never"
-              fillOpacity = 10
-            }
-          }
-        }
-        options = {
-          legend = {
-            displayMode = "table"
-            placement = "bottom"
-            calcs = ["mean", "max"]
-          }
-        }
-      },
-      
-      # Row 3: Data Collection Trend
-      {
-        id = 7
-        title = "Data Collection Success vs Errors"
-        type = "timeseries"
-        gridPos = { h = 8, w = 12, x = 0, y = 14 }
+        gridPos = { h = 9, w = 12, x = 12, y = 14 }
         targets = [
           {
-            datasource = { uid = var.prometheus_datasource_uid }
-            expr = "rate({{name}}_data_collection_total[5m]) * 60"
+            datasource = { 
+              type = "prometheus"
+              uid = var.prometheus_datasource_uid 
+            }
+            expr = "histogram_quantile(0.50, sum by(le) (rate({{name|replace('-', '_')}}_http_request_duration_seconds_bucket[5m])))"
             refId = "A"
-            legendFormat = "Success"
+            legendFormat = "p50 (median)"
           },
           {
-            datasource = { uid = var.prometheus_datasource_uid }
-            expr = "rate({{name}}_data_collection_errors_total[5m]) * 60"
+            datasource = { 
+              type = "prometheus"
+              uid = var.prometheus_datasource_uid 
+            }
+            expr = "histogram_quantile(0.95, sum by(le) (rate({{name|replace('-', '_')}}_http_request_duration_seconds_bucket[5m])))"
             refId = "B"
-            legendFormat = "Errors"
+            legendFormat = "p95"
+          },
+          {
+            datasource = { 
+              type = "prometheus"
+              uid = var.prometheus_datasource_uid 
+            }
+            expr = "histogram_quantile(0.99, sum by(le) (rate({{name|replace('-', '_')}}_http_request_duration_seconds_bucket[5m])))"
+            refId = "C"
+            legendFormat = "p99"
           }
         ]
         fieldConfig = {
           defaults = {
-            unit = "ops"
+            unit = "s"
             custom = {
+              lineWidth = 2
               lineInterpolation = "smooth"
               showPoints = "never"
               fillOpacity = 20
+              gradientMode = "hue"
+              spanNulls = true
+              axisPlacement = "auto"
+              axisLabel = "Latency"
             }
           }
           overrides = [
             {
-              matcher = { id = "byName", options = "Errors" }
+              matcher = { id = "byName", options = "p50 (median)" }
+              properties = [
+                { id = "color", value = { mode = "fixed", fixedColor = "blue" } }
+              ]
+            },
+            {
+              matcher = { id = "byName", options = "p95" }
+              properties = [
+                { id = "color", value = { mode = "fixed", fixedColor = "orange" } }
+              ]
+            },
+            {
+              matcher = { id = "byName", options = "p99" }
               properties = [
                 { id = "color", value = { mode = "fixed", fixedColor = "red" } }
               ]
             }
           ]
         }
+        options = {
+          tooltip = {
+            mode = "multi"
+            sort = "desc"
+          }
+          legend = {
+            showLegend = true
+            displayMode = "table"
+            placement = "bottom"
+            calcs = ["mean", "max", "last"]
+          }
+        }
       },
       
-      # Row 3: API Calls by Status
+      # === ROW: DATA COLLECTION ===
+      {
+        id = 102
+        title = "📦 Data Collection & Reliability"
+        type = "row"
+        gridPos = { h = 1, w = 24, x = 0, y = 23 }
+        collapsed = false
+      },
+      
+      # Data Collection Success vs Errors (Dual Axis)
+      {
+        id = 7
+        title = "📊 Data Collection Metrics"
+        type = "timeseries"
+        gridPos = { h = 9, w = 16, x = 0, y = 24 }
+        targets = [
+          {
+            datasource = { 
+              type = "prometheus"
+              uid = var.prometheus_datasource_uid 
+            }
+            expr = "rate({{name|replace('-', '_')}}_data_collection_total[5m]) * 60"
+            refId = "A"
+            legendFormat = "✅ Success"
+          },
+          {
+            datasource = { 
+              type = "prometheus"
+              uid = var.prometheus_datasource_uid 
+            }
+            expr = "rate({{name|replace('-', '_')}}_data_collection_errors_total[5m]) * 60"
+            refId = "B"
+            legendFormat = "❌ Errors"
+          }
+        ]
+        fieldConfig = {
+          defaults = {
+            unit = "ops"
+            custom = {
+              lineWidth = 2
+              lineInterpolation = "smooth"
+              showPoints = "auto"
+              fillOpacity = 30
+              gradientMode = "opacity"
+              spanNulls = true
+              axisPlacement = "auto"
+            }
+          }
+          overrides = [
+            {
+              matcher = { id = "byName", options = "✅ Success" }
+              properties = [
+                { 
+                  id = "color"
+                  value = { mode = "fixed", fixedColor = "green" } 
+                },
+                {
+                  id = "custom.fillOpacity"
+                  value = 40
+                }
+              ]
+            },
+            {
+              matcher = { id = "byName", options = "❌ Errors" }
+              properties = [
+                { 
+                  id = "color"
+                  value = { mode = "fixed", fixedColor = "red" } 
+                },
+                {
+                  id = "custom.fillOpacity"
+                  value = 60
+                }
+              ]
+            }
+          ]
+        }
+        options = {
+          tooltip = {
+            mode = "multi"
+            sort = "desc"
+          }
+          legend = {
+            showLegend = true
+            displayMode = "table"
+            placement = "bottom"
+            calcs = ["mean", "max", "last", "sum"]
+          }
+        }
+      },
+      
+      # API Calls Distribution (Pie Chart)
       {
         id = 8
-        title = "API Calls by Status"
-        type = "timeseries"
-        gridPos = { h = 8, w = 12, x = 12, y = 14 }
+        title = "🔄 API Call Status Distribution"
+        type = "piechart"
+        gridPos = { h = 9, w = 8, x = 16, y = 24 }
         targets = [{
-          datasource = { uid = var.prometheus_datasource_uid }
-          expr = "sum by(status) (rate({{name}}_api_calls_total[5m]))"
+          datasource = { 
+            type = "prometheus"
+            uid = var.prometheus_datasource_uid 
+          }
+          expr = "sum by(status) (increase({{name|replace('-', '_')}}_api_calls_total[5m]))"
           refId = "A"
           legendFormat = {% raw %}"{{status}}"{% endraw %}
         }]
         fieldConfig = {
           defaults = {
-            unit = "reqps"
-            custom = {
-              lineInterpolation = "smooth"
-              showPoints = "never"
-              fillOpacity = 10
-              stacking = { mode = "normal" }
-            }
+            unit = "short"
+            decimals = 0
           }
+          overrides = [
+            {
+              matcher = { id = "byName", options = "success" }
+              properties = [
+                { id = "color", value = { mode = "fixed", fixedColor = "green" } }
+              ]
+            },
+            {
+              matcher = { id = "byName", options = "error" }
+              properties = [
+                { id = "color", value = { mode = "fixed", fixedColor = "red" } }
+              ]
+            }
+          ]
         }
         options = {
+          reduceOptions = {
+            values = false
+            calcs = ["lastNotNull"]
+          }
+          pieType = "donut"
+          displayLabels = ["name", "percent"]
           legend = {
             displayMode = "table"
             placement = "bottom"
-            calcs = ["mean", "max"]
+            calcs = ["sum"]
+            values = ["value"]
+          }
+          tooltip = {
+            mode = "single"
           }
         }
       },
       
-      # Row 4: Crypto Price (Business Metric)
+      # === ROW: BUSINESS METRICS ===
+      {
+        id = 103
+        title = "💰 Business Metrics"
+        type = "row"
+        gridPos = { h = 1, w = 24, x = 0, y = 33 }
+        collapsed = false
+      },
+      
+      # {{coin}} Price Chart (Premium Styling)
       {
         id = 9
-        title = "{{coin}} Price (USD)"
+        title = "₿ {{coin}} Price (USDT)"
         type = "timeseries"
-        gridPos = { h = 8, w = 24, x = 0, y = 22 }
+        gridPos = { h = 10, w = 24, x = 0, y = 34 }
         targets = [{
-          datasource = { uid = var.prometheus_datasource_uid }
+          datasource = { 
+            type = "prometheus"
+            uid = var.prometheus_datasource_uid 
+          }
           expr = "crypto_price{symbol=\"{{coin}}\"}"
           refId = "A"
-          legendFormat = "{{coin}}/USD"
+          legendFormat = "{{coin}}/USDT"
         }]
         fieldConfig = {
           defaults = {
             unit = "currencyUSD"
+            decimals = 2
+            color = { 
+              mode = "thresholds"
+            }
             custom = {
+              lineWidth = 3
               lineInterpolation = "smooth"
               showPoints = "never"
-              fillOpacity = 20
+              fillOpacity = 35
+              gradientMode = "scheme"
+              spanNulls = true
+              axisPlacement = "auto"
+              axisLabel = "Price (USD)"
+              drawStyle = "line"
+            }
+            thresholds = {
+              mode = "percentage"
+              steps = [
+                { value = 0, color = "red" },
+                { value = 25, color = "orange" },
+                { value = 50, color = "yellow" },
+                { value = 75, color = "green" },
+                { value = 100, color = "blue" }
+              ]
             }
           }
+          overrides = []
         }
         options = {
+          tooltip = {
+            mode = "multi"
+            sort = "none"
+          }
           legend = {
+            showLegend = true
             displayMode = "list"
             placement = "bottom"
+            calcs = ["mean", "min", "max", "last"]
           }
         }
       }
@@ -331,6 +719,6 @@ resource "grafana_dashboard" "{{name}}_apm" {
   })
 }
 
-output "dashboard_{{name}}_url" {
-  value = "http://localhost:3000/d/$${grafana_dashboard.{{name}}_apm.uid}"
+output "dashboard_{{name|replace('-', '_')}}_url" {
+  value = "http://localhost:3000/d/$${grafana_dashboard.{{name|replace('-', '_')}}_apm.uid}"
 }
