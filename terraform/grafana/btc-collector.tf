@@ -5,8 +5,12 @@ resource "grafana_dashboard" "btc_collector_apm" {
     tags        = ["apm", "BTC", "collector", "terraform"]
     timezone    = "browser"
     editable    = true
-    refresh     = "10s"
+    refresh     = "30s"
     schemaVersion = 39
+    time = {
+      from = "now-1m"
+      to   = "now"
+    }
     
     panels = [
       # Row 1: Service Health
