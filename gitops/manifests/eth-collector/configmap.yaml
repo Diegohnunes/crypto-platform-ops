@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: eth-collector-config
-  namespace: eth-app
-data:
-  COIN: "ETH"
-  SERVICE_TYPE: "collector"
-  LOG_LEVEL: "info"
