@@ -2,6 +2,100 @@ import os
 import subprocess
 import time
 from jinja2 import Environment, FileSystemLoader
+import requests
+import json
+
+def ensure_grafana_token(project_root):
+    """Ensure a valid Grafana service account token exists for Terraform"""
+    print(f"\nStep 11a/11: Verifying Grafana authorization...")
+    
+    tfvars_path = os.path.join(project_root, "terraform", "grafana", "terraform.tfvars")
+    token = None
+    
+    # 1. Check existing token
+    if os.path.exists(tfvars_path):
+        try:
+            with open(tfvars_path, 'r') as f:
+                for line in f:
+                    if "grafana_service_account_token" in line:
+                        token = line.split('=')[1].strip().strip('"')
+                        break
+        except Exception as e:
+            print(f"   ⚠️  Error reading tfvars: {e}")
+
+    # 2. Validate token if exists
+    if token:
+        try:
+            # Check if Grafana is accessible first
+            try:
+                # Use /api/serviceaccounts/search to validate (requires Admin role which token has)
+                response = requests.get("http://localhost:3000/api/serviceaccounts/search", 
+                                     headers={"Authorization": f"Bearer {token}"},
+                                     timeout=2)
+                if response.status_code == 200:
+                    print("   ✅ Existing token is valid")
+                    return True
+                else:
+                    print(f"   ⚠️  Existing token invalid (Status: {response.status_code})")
+            except requests.exceptions.ConnectionError:
+                print("   ⚠️  Grafana not accessible on localhost:3000")
+                print("   ℹ️  Cannot validate existing token.")
+            except Exception as e:
+                print(f"   ⚠️  Token validation failed: {e}")
+        except Exception as e:
+            print(f"   ⚠️  Token validation failed: {e}")
+
+    # 3. Create new token if needed
+    print("   🔄 Generating new Grafana token...")
+    try:
+        # Get admin credentials
+        user_cmd = "kubectl get secret -n monitoring grafana-admin -o jsonpath='{.data.admin-user}' | base64 -d"
+        pass_cmd = "kubectl get secret -n monitoring grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d"
+        
+        admin_user = subprocess.run(user_cmd, shell=True, capture_output=True, text=True).stdout.strip()
+        admin_pass = subprocess.run(pass_cmd, shell=True, capture_output=True, text=True).stdout.strip()
+        
+        if not admin_user or not admin_pass:
+            print("   ❌ Could not retrieve Grafana admin credentials")
+            return False
+
+        # Create Service Account (idempotent)
+        sa_payload = '{"name":"terraform-provisioner", "role":"Admin"}'
+        create_sa_cmd = f"curl -s -X POST -H 'Content-Type: application/json' -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts -d '{sa_payload}'"
+        subprocess.run(create_sa_cmd, shell=True, capture_output=True)
+
+        # Get Service Account ID
+        get_sa_cmd = f"curl -s -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts/search"
+        sa_list = subprocess.run(get_sa_cmd, shell=True, capture_output=True, text=True).stdout
+        
+        sas_response = json.loads(sa_list)
+        sas = sas_response.get('serviceAccounts', [])
+        sa_id = next((sa['id'] for sa in sas if sa['name'] == 'terraform-provisioner'), None)
+        
+        if not sa_id:
+            print("   ❌ Could not find terraform-provisioner service account")
+            return False
+
+        # Create Token
+        token_payload = '{"name":"terraform-token-' + str(int(time.time())) + '"}'
+        create_token_cmd = f"curl -s -X POST -H 'Content-Type: application/json' -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts/{sa_id}/tokens -d '{token_payload}'"
+        token_resp = subprocess.run(create_token_cmd, shell=True, capture_output=True, text=True).stdout
+        
+        new_token = json.loads(token_resp).get('key')
+        
+        if new_token:
+            # Save to tfvars
+            os.makedirs(os.path.dirname(tfvars_path), exist_ok=True)
+            with open(tfvars_path, 'w') as f:
+                f.write(f'grafana_service_account_token = "{new_token}"\n')
+            print("   ✅ New token generated and saved")
+            return True
+            
+    except Exception as e:
+        print(f"   ❌ Token generation failed: {e}")
+        return False
+
+    return False
 
 def run_command(cmd, cwd=None, check=True):
     """Execute shell command and return output"""
@@ -177,97 +271,7 @@ spec:
         print(f"   Pod took longer than expected, but deployment is in progress")
         print(f"   Check status with: kubectl get pods -n {namespace}")
 
-def ensure_grafana_token(project_root):
-    """Ensure a valid Grafana service account token exists for Terraform"""
-    print(f"\nStep 11a/11: Verifying Grafana authorization...")
-    
-    tfvars_path = os.path.join(project_root, "terraform", "grafana", "terraform.tfvars")
-    token = None
-    
-    # 1. Check existing token
-    if os.path.exists(tfvars_path):
-        try:
-            with open(tfvars_path, 'r') as f:
-                for line in f:
-                    if "grafana_service_account_token" in line:
-                        token = line.split('=')[1].strip().strip('"')
-                        break
-        except Exception as e:
-            print(f"   ⚠️  Error reading tfvars: {e}")
 
-    # 2. Validate token if exists
-    if token:
-        try:
-            # Check if Grafana is accessible first
-            try:
-                # Use /api/serviceaccounts/search to validate (requires Admin role which token has)
-                response = requests.get("http://localhost:3000/api/serviceaccounts/search", 
-                                     headers={"Authorization": f"Bearer {token}"},
-                                     timeout=2)
-                if response.status_code == 200:
-                    print("   ✅ Existing token is valid")
-                    return True
-                else:
-                    print(f"   ⚠️  Existing token invalid (Status: {response.status_code})")
-            except requests.exceptions.ConnectionError:
-                print("   ⚠️  Grafana not accessible on localhost:3000")
-                print("   ℹ️  Cannot validate existing token.")
-            except Exception as e:
-                print(f"   ⚠️  Token validation failed: {e}")
-        except Exception as e:
-            print(f"   ⚠️  Token validation failed: {e}")
-
-    # 3. Create new token if needed
-    print("   🔄 Generating new Grafana token...")
-    try:
-        # Get admin credentials
-        user_cmd = "kubectl get secret -n monitoring grafana-admin -o jsonpath='{.data.admin-user}' | base64 -d"
-        pass_cmd = "kubectl get secret -n monitoring grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d"
-        
-        admin_user = subprocess.run(user_cmd, shell=True, capture_output=True, text=True).stdout.strip()
-        admin_pass = subprocess.run(pass_cmd, shell=True, capture_output=True, text=True).stdout.strip()
-        
-        if not admin_user or not admin_pass:
-            print("   ❌ Could not retrieve Grafana admin credentials")
-            return False
-
-        # Create Service Account (idempotent)
-        sa_payload = '{"name":"terraform-provisioner", "role":"Admin"}'
-        create_sa_cmd = f"curl -s -X POST -H 'Content-Type: application/json' -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts -d '{sa_payload}'"
-        subprocess.run(create_sa_cmd, shell=True, capture_output=True)
-
-        # Get Service Account ID
-        get_sa_cmd = f"curl -s -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts/search"
-        sa_list = subprocess.run(get_sa_cmd, shell=True, capture_output=True, text=True).stdout
-        
-        sas_response = json.loads(sa_list)
-        sas = sas_response.get('serviceAccounts', [])
-        sa_id = next((sa['id'] for sa in sas if sa['name'] == 'terraform-provisioner'), None)
-        
-        if not sa_id:
-            print("   ❌ Could not find terraform-provisioner service account")
-            return False
-
-        # Create Token
-        token_payload = '{"name":"terraform-token-' + str(int(time.time())) + '"}'
-        create_token_cmd = f"curl -s -X POST -H 'Content-Type: application/json' -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts/{sa_id}/tokens -d '{token_payload}'"
-        token_resp = subprocess.run(create_token_cmd, shell=True, capture_output=True, text=True).stdout
-        
-        new_token = json.loads(token_resp).get('key')
-        
-        if new_token:
-            # Save to tfvars
-            os.makedirs(os.path.dirname(tfvars_path), exist_ok=True)
-            with open(tfvars_path, 'w') as f:
-                f.write(f'grafana_service_account_token = "{new_token}"\n')
-            print("   ✅ New token generated and saved")
-            return True
-            
-    except Exception as e:
-        print(f"   ❌ Token generation failed: {e}")
-        return False
-
-    return False
 
 
     # Step 11/11: Generate and apply Terraform dashboard
