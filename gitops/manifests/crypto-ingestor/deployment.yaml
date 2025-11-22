@@ -18,7 +18,22 @@ spec:
         app: crypto-ingestor
         coin: ALL
         type: ingestor
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
     spec:
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - crypto-ingestor
+                topologyKey: "kubernetes.io/hostname"
       securityContext:
         fsGroup: 2000
         runAsUser: 1000
