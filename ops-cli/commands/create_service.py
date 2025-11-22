@@ -6,10 +6,11 @@ from jinja2 import Environment, FileSystemLoader
 def run_command(cmd, cwd=None, check=True):
     """Execute shell command and return output"""
     print(f"   Running: {cmd}")
-    result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, check=check)
-    if result.returncode != 0 and check:
-        print(f"   Error: {result.stderr}")
-        raise Exception(f"Command failed: {cmd}")
+    result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        print(f"   Error Output:\n{result.stderr}")
+        if check:
+            raise Exception(f"Command failed: {cmd}")
     return result.stdout
 
 def create_service_command(name, coin, service_type):
