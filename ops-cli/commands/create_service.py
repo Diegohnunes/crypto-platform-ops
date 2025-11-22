@@ -133,7 +133,7 @@ def create_service_command(name, coin, service_type):
     env = Environment(loader=FileSystemLoader(templates_dir))
 
 
-    print("Step 1/11: Generating application code...")
+    print("Step 1/10: Generating application code...")
     os.makedirs(output_code_dir, exist_ok=True)
     generate_file(env, "main.go.j2", output_code_dir, "main.go", context)
     generate_file(env, "go.mod.j2", output_code_dir, "go.mod", context)
@@ -147,47 +147,47 @@ def create_service_command(name, coin, service_type):
 
 
 
-    print("\nStep 2/11: Building Docker image...")
+    print("\nStep 2/10: Building Docker image...")
     run_command(f"docker build -t diegohnunes/{name}:v2.0 apps/{name}", cwd=base_dir)
     print(f"   Image built: diegohnunes/{name}:v2.0")
 
 
-    print("\nStep 3/11: Importing image to k3d...")
+    print("\nStep 3/10: Importing image to k3d...")
     run_command(f"k3d image import diegohnunes/{name}:v2.0 -c devlab", cwd=base_dir)
     print(f"   Image imported to k3d")
 
 
-    print(f"\nStep 5/11: Skipping namespace/PV creation (using shared default namespace)...")
+    print(f"\nStep 4/10: Skipping namespace/PV creation (using shared default namespace)...")
     print(f"   All services use shared crypto-shared-storage-v2 PVC in default namespace")
 
 
-    print("\nStep 6/11: Generating Kubernetes manifests...")
+    print("\nStep 5/10: Generating Kubernetes manifests...")
     os.makedirs(output_manifests_dir, exist_ok=True)
     generate_file(env, "deployment.yaml.j2", output_manifests_dir, "deployment.yaml", context)
     generate_file(env, "service.yaml.j2", output_manifests_dir, "service.yaml", context)
     generate_file(env, "configmap.yaml.j2", output_manifests_dir, "configmap.yaml", context)
 
 
-    print("\nStep 7/11: Generating ArgoCD application...")
+    print("\nStep 6/10: Generating ArgoCD application...")
     os.makedirs(output_apps_dir, exist_ok=True)
     generate_file(env, "argocd-app.yaml.j2", output_apps_dir, f"{name}.yaml", context)
 
 
-    print("\nStep 8/11: Committing to Git...")
+    print("\nStep 7/10: Committing to Git...")
     run_command("git add .", cwd=base_dir)
     run_command(f'git commit -m "feat(idp): add {name} service for {coin}"', cwd=base_dir, check=False)
     run_command("git push origin main", cwd=base_dir)
     print(f"   Changes pushed to Git")
 
 
-    print("\nStep 9/11: Deploying to Kubernetes via ArgoCD...")
+    print("\nStep 8/10: Deploying to Kubernetes via ArgoCD...")
     run_command(f"kubectl apply -f gitops/apps/{name}.yaml", cwd=base_dir)
     time.sleep(5) # Wait a bit for ArgoCD to detect the app
     run_command(f"kubectl -n argocd annotate application {name} argocd.argoproj.io/refresh=hard --overwrite", cwd=base_dir)
     print(f"   ArgoCD application deployed")
 
 
-    print(f"\nStep 10/11: Waiting for pod to be ready...")
+    print(f"\nStep 9/10: Waiting for pod to be ready...")
     print(f"   Timeout: 120 seconds")
     try:
         # First wait for deployment to be created by ArgoCD
@@ -218,8 +218,8 @@ def create_service_command(name, coin, service_type):
 
 
 
-    # Step 11/11: Generate and apply Terraform dashboard
-    print("\nStep 11/11: Creating Grafana dashboard with Terraform...")
+    # Step 10/10: Generate and apply Terraform dashboard
+    print("\nStep 10/10: Creating Grafana dashboard with Terraform...")
 
     # Ensure valid token before proceeding
     if not ensure_grafana_token(base_dir):
