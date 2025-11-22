@@ -57,7 +57,7 @@ def rm_service_command(name, coin, service_type):
          print(f"   Namespace {namespace} is still terminating (likely stuck on finalizers)")
 
 
-    print(f"\nStep 3/7: Deleting PersistentVolume...")
+    print("\nStep 4/9: Deleting PersistentVolume...")
     # Force delete PV even if it's in Released state
     run_command(f"kubectl delete pv {pv_name} --force --grace-period=0", check=False)
     
@@ -74,7 +74,7 @@ def rm_service_command(name, coin, service_type):
 
 
 
-    print(f"\nStep 4/8: Cleaning database records...")
+    print(f"\nStep 5/9: Cleaning database records...")
     # Clean up database entries for this coin
     cleanup_script = f"""import sqlite3
 import os
@@ -131,7 +131,7 @@ else:
 
 
 
-    print(f"\nStep 5/8: Deleting application code...")
+    print(f"\nStep 6/9: Deleting application code...")
     app_dir = os.path.join(base_dir, "apps", name)
     if os.path.exists(app_dir):
         import shutil
@@ -141,7 +141,7 @@ else:
         print(f"   Directory doesn't exist: apps/{name}/")
 
 
-    print(f"\nStep 6/8: Deleting manifests...")
+    print(f"\nStep 7/9: Deleting manifests...")
     manifests_dir = os.path.join(base_dir, "gitops", "manifests", name)
     if os.path.exists(manifests_dir):
         import shutil
@@ -151,7 +151,7 @@ else:
         print(f"   Directory doesn't exist")
 
 
-    print(f"\nStep 7/8: Deleting ArgoCD app file...")
+    print(f"\nStep 8/9: Deleting ArgoCD app file...")
     argocd_file = os.path.join(base_dir, "gitops", "apps", f"{name}.yaml")
     if os.path.exists(argocd_file):
         os.remove(argocd_file)
@@ -160,7 +160,7 @@ else:
         print(f"   File doesn't exist")
 
 
-    print(f"\nStep 8/8: Committing to Git...")
+    print(f"\nStep 9/9: Committing to Git...")
     run_command("git add .", cwd=base_dir)
     run_command(f'git commit -m "feat(idp): remove {name} service"', cwd=base_dir, check=False)
     run_command("git push origin main", cwd=base_dir)
