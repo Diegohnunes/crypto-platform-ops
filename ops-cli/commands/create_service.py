@@ -163,8 +163,8 @@ spec:
             if line:
                 print(f"   {line}")
     except:
-        print(f\"   Pod took longer than expected, but deployment is in progress\")
-        print(f\"   Check status with: kubectl get pods -n {namespace}\")
+        print(f"   Pod took longer than expected, but deployment is in progress")
+        print(f"   Check status with: kubectl get pods -n {namespace}")
 
 
     print(f"\nStep 11/11: Creating Grafana dashboard via Terraform...")
