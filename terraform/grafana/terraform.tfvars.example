@@ -1,0 +1,5 @@
+# Example: terraform.tfvars (DO NOT COMMIT)
+# Copy this to terraform.tfvars and fill in your values
+
+# grafana_url = "http://localhost:3000"
+# grafana_service_account_token = "glsa_xxxxxxxxxxxxxxxxxxxxx"
