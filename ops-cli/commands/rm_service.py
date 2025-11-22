@@ -22,25 +22,55 @@ def rm_service_command(name, coin, service_type):
     namespace = "default"  # All services now run in default namespace
 
 
+    # Step 1: Suspend Sync
     print("Step 1/11: Suspending ArgoCD auto-sync...")
     run_command(f"kubectl patch application {name} -n argocd --type=merge -p '{{\"spec\":{{\"syncPolicy\":null}}}}'", check=False)
     print(f"   ArgoCD auto-sync suspended")
 
-    print("\nStep 2/11: Deleting ArgoCD application...")
-    run_command(f"kubectl delete application -n argocd {name}", check=False)
-    print(f"   ArgoCD application deleted")
+    # Step 2: Delete Files & Commit (CRITICAL: Do this before deleting App to prevent recreation by App of Apps)
+    print(f"\nStep 2/11: Removing files from Git (to prevent recreation)...")
+    
+    # Delete ArgoCD app file
+    argocd_file = os.path.join(base_dir, "gitops", "apps", f"{name}.yaml")
+    if os.path.exists(argocd_file):
+        os.remove(argocd_file)
+        print(f"   Deleted: gitops/apps/{name}.yaml")
+    
+    # Delete manifests
+    manifests_dir = os.path.join(base_dir, "gitops", "manifests", name)
+    if os.path.exists(manifests_dir):
+        import shutil
+        shutil.rmtree(manifests_dir)
+        print(f"   Deleted: gitops/manifests/{name}/")
+        
+    # Delete app code
+    app_dir = os.path.join(base_dir, "apps", name)
+    if os.path.exists(app_dir):
+        import shutil
+        shutil.rmtree(app_dir)
+        print(f"   Deleted: apps/{name}/")
 
+    # Commit and Push
+    print(f"   Committing removal to Git...")
+    run_command("git add .", cwd=base_dir)
+    run_command(f'git commit -m "feat(idp): remove {name} service"', cwd=base_dir, check=False)
+    run_command("git push origin main", cwd=base_dir)
+    print(f"   ✅ Changes pushed to Git (App of Apps will now prune it)")
 
-    print(f"\nStep 3/11: Deleting Kubernetes resources in {namespace}...")
-    # Delete deployment, service, configmap
-    run_command(f"kubectl delete deployment {name} -n {namespace}", check=False)
-    run_command(f"kubectl delete service {name} -n {namespace}", check=False)
-    run_command(f"kubectl delete configmap {name}-config -n {namespace}", check=False)
-    print(f"   Kubernetes resources deleted")
+    # Step 3: Delete ArgoCD App (Manual)
+    print("\nStep 3/11: Deleting ArgoCD application...")
+    run_command(f"kubectl delete application -n argocd {name} --wait=false", check=False)
+    print(f"   ArgoCD application deletion triggered")
 
+    # Step 4: Delete K8s Resources
+    print(f"\nStep 4/11: Deleting Kubernetes resources in {namespace}...")
+    run_command(f"kubectl delete deployment {name} -n {namespace} --wait=false", check=False)
+    run_command(f"kubectl delete service {name} -n {namespace} --wait=false", check=False)
+    run_command(f"kubectl delete configmap {name}-config -n {namespace} --wait=false", check=False)
+    print(f"   Kubernetes resources deletion triggered")
 
-
-    print(f"\nStep 4/11: Cleaning database records...")
+    # Step 5: Clean DB
+    print(f"\nStep 5/11: Cleaning database records...")
     # Clean up database entries for this coin
     cleanup_script = f"""import sqlite3
 import os
@@ -95,41 +125,16 @@ else:
         if os_module.path.exists(temp_script):
             os_module.remove(temp_script)
 
-
-    print(f"\nStep 5/11: Restarting frontend to refresh cache...")
+    # Step 6: Restart Frontend
+    print(f"\nStep 6/11: Restarting frontend to refresh cache...")
     run_command("kubectl rollout restart deployment/crypto-frontend -n default", check=False)
     print(f"   Frontend restarted (SQLite cache will be refreshed)")
 
+    # Step 7-8: Skipped (Files already deleted in Step 2)
+    print(f"\nStep 7/11: Files already deleted (Skipped)")
+    print(f"\nStep 8/11: Files already deleted (Skipped)")
 
-    print(f"\nStep 6/11: Deleting application code...")
-    app_dir = os.path.join(base_dir, "apps", name)
-    if os.path.exists(app_dir):
-        import shutil
-        shutil.rmtree(app_dir)
-        print(f"   Deleted: apps/{name}/")
-    else:
-        print(f"   Directory doesn't exist: apps/{name}/")
-
-
-    print(f"\nStep 7/11: Deleting manifests...")
-    manifests_dir = os.path.join(base_dir, "gitops", "manifests", name)
-    if os.path.exists(manifests_dir):
-        import shutil
-        shutil.rmtree(manifests_dir)
-        print(f"   Deleted: gitops/manifests/{name}/")
-    else:
-        print(f"   Directory doesn't exist")
-
-
-    print(f"\nStep 8/11: Deleting ArgoCD app file...")
-    argocd_file = os.path.join(base_dir, "gitops", "apps", f"{name}.yaml")
-    if os.path.exists(argocd_file):
-        os.remove(argocd_file)
-        print(f"   Deleted: gitops/apps/{name}.yaml")
-    else:
-        print(f"   File doesn't exist")
-
-
+    # Step 9: Terraform Destroy
     print(f"\nStep 9/11: Destroying Grafana dashboard via Terraform...")
     tf_file = os.path.join(base_dir, "terraform", "grafana", f"{name}.tf")
     
@@ -164,10 +169,10 @@ else:
         os.remove(tf_legacy)
         print(f"   Deleted: terraform/grafana/dashboards/{name}.tf")
 
-
-    print(f"\nStep 10/11: Committing to Git...")
+    # Step 10: Commit Terraform changes
+    print(f"\nStep 10/11: Committing Terraform changes to Git...")
     run_command("git add .", cwd=base_dir)
-    run_command(f'git commit -m "feat(idp): remove {name} service"', cwd=base_dir, check=False)
+    run_command(f'git commit -m "feat(idp): remove {name} dashboard"', cwd=base_dir, check=False)
     run_command("git push origin main", cwd=base_dir)
     print(f"   Changes pushed to Git")
 
