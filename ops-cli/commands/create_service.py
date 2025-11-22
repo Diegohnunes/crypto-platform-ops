@@ -277,8 +277,8 @@ def ensure_grafana_token(project_root):
     if not ensure_grafana_token(base_dir):
         print("   ⚠️  Skipping dashboard creation (Authorization failed)")
     else:
-        terraform_dir = os.path.join(base_dir, "terraform", "grafana", "dashboards")
-        os.makedirs(terraform_dir, exist_ok=True)
+        terraform_dir = os.path.join(base_dir, "terraform", "grafana")
+        # os.makedirs(terraform_dir, exist_ok=True) - Not needed for root dir
 
         # Generate Terraform file from template
         dashboard_tf_path = os.path.join(terraform_dir, f"{name}.tf")

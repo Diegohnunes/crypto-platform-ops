@@ -160,6 +160,19 @@ else:
         print(f"   File doesn't exist")
 
 
+    print(f"\nStep 8a/10: Deleting Terraform dashboard...")
+    tf_file = os.path.join(base_dir, "terraform", "grafana", f"{name}.tf")
+    if os.path.exists(tf_file):
+        os.remove(tf_file)
+        print(f"   Deleted: terraform/grafana/{name}.tf")
+    
+    # Also check legacy path
+    tf_legacy = os.path.join(base_dir, "terraform", "grafana", "dashboards", f"{name}.tf")
+    if os.path.exists(tf_legacy):
+        os.remove(tf_legacy)
+        print(f"   Deleted: terraform/grafana/dashboards/{name}.tf")
+
+
     print(f"\nStep 9/10: Committing to Git...")
     run_command("git add .", cwd=base_dir)
     run_command(f'git commit -m "feat(idp): remove {name} service"', cwd=base_dir, check=False)
