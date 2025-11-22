@@ -177,36 +177,144 @@ spec:
         print(f"   Pod took longer than expected, but deployment is in progress")
         print(f"   Check status with: kubectl get pods -n {namespace}")
 
-
-    print(f"\nStep 11/11: Creating Grafana dashboard via Terraform...")
-    terraform_dir = os.path.join(base_dir, "terraform", "grafana")
-    dashboard_file = os.path.join(terraform_dir, f"{name}.tf")
+def ensure_grafana_token(project_root):
+    """Ensure a valid Grafana service account token exists for Terraform"""
+    print(f"\nStep 11a/11: Verifying Grafana authorization...")
     
-    # Generate dashboard Terraform file
-    try:
-        generate_file(env, "dashboard.tf.j2", terraform_dir, f"{name}.tf", context)
-        
-        # Check if Grafana is accessible before running Terraform
-        import socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)
-        grafana_accessible = sock.connect_ex(('localhost', 3000)) == 0
-        sock.close()
-        
-        if not grafana_accessible:
-            print(f"   ⚠️  Grafana not accessible on localhost:3000")
-            print(f"   ℹ️  Dashboard config created but not applied")
-            print(f"   ℹ️  Run manually: cd terraform/grafana && terraform apply")
-        else:
-            # Run terraform apply
-            run_command("terraform apply -auto-approve", cwd=terraform_dir)
-            print(f"   ✅ Dashboard created successfully!")
-            print(f"   📊 Access at: http://localhost:3000/d/{name}-apm")
-    except Exception as e:
-        print(f"   ⚠️  Dashboard creation skipped: {str(e)}")
-        print(f"   ℹ️  Service is operational")
-        print(f"   ℹ️  Create dashboard manually later if needed")
+    tfvars_path = os.path.join(project_root, "terraform", "grafana", "terraform.tfvars")
+    token = None
+    
+    # 1. Check existing token
+    if os.path.exists(tfvars_path):
+        try:
+            with open(tfvars_path, 'r') as f:
+                for line in f:
+                    if "grafana_service_account_token" in line:
+                        token = line.split('=')[1].strip().strip('"')
+                        break
+        except Exception as e:
+            print(f"   ⚠️  Error reading tfvars: {e}")
 
+    # 2. Validate token if exists
+    if token:
+        try:
+            # Check if Grafana is accessible first
+            try:
+                response = requests.get("http://localhost:3000/api/serviceaccounts", 
+                                     headers={"Authorization": f"Bearer {token}"},
+                                     timeout=2)
+                if response.status_code == 200:
+                    print("   ✅ Existing token is valid")
+                    return True
+                else:
+                    print(f"   ⚠️  Existing token invalid (Status: {response.status_code})")
+            except requests.exceptions.ConnectionError:
+                print("   ⚠️  Grafana not accessible on localhost:3000")
+                print("   ℹ️  Cannot validate existing token.")
+            except Exception as e:
+                print(f"   ⚠️  Token validation failed: {e}")
+        except Exception as e:
+            print(f"   ⚠️  Token validation failed: {e}")
+
+    # 3. Create new token if needed
+    print("   🔄 Generating new Grafana token...")
+    try:
+        # Get admin credentials
+        user_cmd = "kubectl get secret -n monitoring grafana-admin -o jsonpath='{.data.admin-user}' | base64 -d"
+        pass_cmd = "kubectl get secret -n monitoring grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d"
+        
+        admin_user = subprocess.run(user_cmd, shell=True, capture_output=True, text=True).stdout.strip()
+        admin_pass = subprocess.run(pass_cmd, shell=True, capture_output=True, text=True).stdout.strip()
+        
+        if not admin_user or not admin_pass:
+            print("   ❌ Could not retrieve Grafana admin credentials")
+            return False
+
+        # Create Service Account (idempotent)
+        sa_payload = '{"name":"terraform-provisioner", "role":"Admin"}'
+        create_sa_cmd = f"curl -s -X POST -H 'Content-Type: application/json' -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts -d '{sa_payload}'"
+        subprocess.run(create_sa_cmd, shell=True, capture_output=True)
+
+        # Get Service Account ID
+        get_sa_cmd = f"curl -s -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts"
+        sa_list = subprocess.run(get_sa_cmd, shell=True, capture_output=True, text=True).stdout
+        
+        sas = json.loads(sa_list)
+        sa_id = next((sa['id'] for sa in sas if sa['name'] == 'terraform-provisioner'), None)
+        
+        if not sa_id:
+            print("   ❌ Could not find terraform-provisioner service account")
+            return False
+
+        # Create Token
+        token_payload = '{"name":"terraform-token-' + str(int(time.time())) + '"}'
+        create_token_cmd = f"curl -s -X POST -H 'Content-Type: application/json' -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts/{sa_id}/tokens -d '{token_payload}'"
+        token_resp = subprocess.run(create_token_cmd, shell=True, capture_output=True, text=True).stdout
+        
+        new_token = json.loads(token_resp).get('key')
+        
+        if new_token:
+            # Save to tfvars
+            os.makedirs(os.path.dirname(tfvars_path), exist_ok=True)
+            with open(tfvars_path, 'w') as f:
+                f.write(f'grafana_service_account_token = "{new_token}"\n')
+            print("   ✅ New token generated and saved")
+            return True
+            
+    except Exception as e:
+        print(f"   ❌ Token generation failed: {e}")
+        return False
+
+    return False
+
+
+    # Step 11/11: Generate and apply Terraform dashboard
+    print("\nStep 11/11: Creating Grafana dashboard with Terraform...")
+
+    # Ensure valid token before proceeding
+    if not ensure_grafana_token(base_dir):
+        print("   ⚠️  Skipping dashboard creation (Authorization failed)")
+    else:
+        terraform_dir = os.path.join(base_dir, "terraform", "grafana", "dashboards")
+        os.makedirs(terraform_dir, exist_ok=True)
+
+        # Generate Terraform file from template
+        dashboard_tf_path = os.path.join(terraform_dir, f"{name}.tf")
+        generate_file(env, "dashboard.tf.j2", terraform_dir, f"{name}.tf", context)
+
+        # Apply Terraform
+        print("   Initializing Terraform...")
+        result = subprocess.run(
+            ["terraform", "init"],
+            cwd=os.path.join(base_dir, "terraform", "grafana"),
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print(f"   ❌ Terraform init failed: {result.stderr}")
+            print(f"   ⚠️  Dashboard creation skipped.")
+            print(f"   ℹ️  Service is operational")
+            print(f"   ℹ️  Create dashboard manually later if needed")
+        else:
+            print("   Applying Terraform configuration...")
+            result = subprocess.run(
+                ["terraform", "apply", "-auto-approve", f"-target=grafana_dashboard.{name}_apm"],
+                cwd=os.path.join(base_dir, "terraform", "grafana"),
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode != 0:
+                if "Connection refused" in result.stderr:
+                     print(f"   ⚠️  Grafana not accessible on localhost:3000")
+                     print(f"   ℹ️  Dashboard config created but not applied")
+                     print(f"   ℹ️  Run manually: cd terraform/grafana && terraform apply")
+                else:
+                     print(f"   ⚠️  Dashboard creation skipped: {result.stderr.splitlines()[0] if result.stderr else 'Unknown error'}")
+                     print(f"   ℹ️  Service is operational")
+                     print(f"   ℹ️  Create dashboard manually later if needed")
+            else:
+                print(f"   ✅ Grafana dashboard created: {name}-apm")
 
 
     print(f"\n{'='*60}")
