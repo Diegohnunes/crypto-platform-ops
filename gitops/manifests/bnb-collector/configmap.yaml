@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bnb-collector-config
+  namespace: default
+data:
+  COIN: "BNB"
+  SERVICE_TYPE: "collector"
+  LOG_LEVEL: "info"
