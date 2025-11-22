@@ -7,7 +7,7 @@ import json
 
 def ensure_grafana_token(project_root):
     """Ensure a valid Grafana service account token exists for Terraform"""
-    print(f"\nStep 11a/11: Verifying Grafana authorization...")
+    print(f"\nStep 10a/10: Verifying Grafana authorization...")
     
     tfvars_path = os.path.join(project_root, "terraform", "grafana", "terraform.tfvars")
     token = None

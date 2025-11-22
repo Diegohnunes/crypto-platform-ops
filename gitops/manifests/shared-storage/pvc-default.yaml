@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: crypto-shared-storage-v2
+  name: crypto-shared-storage-v3
   namespace: default
 spec:
   accessModes:
@@ -10,4 +10,4 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: manual
-  volumeName: crypto-shared-pv
+  volumeName: crypto-shared-pv-v3
