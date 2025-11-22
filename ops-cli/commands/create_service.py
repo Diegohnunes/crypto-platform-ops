@@ -200,7 +200,8 @@ def ensure_grafana_token(project_root):
         try:
             # Check if Grafana is accessible first
             try:
-                response = requests.get("http://localhost:3000/api/serviceaccounts", 
+                # Use /api/serviceaccounts/search to validate (requires Admin role which token has)
+                response = requests.get("http://localhost:3000/api/serviceaccounts/search", 
                                      headers={"Authorization": f"Bearer {token}"},
                                      timeout=2)
                 if response.status_code == 200:
@@ -236,10 +237,11 @@ def ensure_grafana_token(project_root):
         subprocess.run(create_sa_cmd, shell=True, capture_output=True)
 
         # Get Service Account ID
-        get_sa_cmd = f"curl -s -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts"
+        get_sa_cmd = f"curl -s -u {admin_user}:{admin_pass} http://localhost:3000/api/serviceaccounts/search"
         sa_list = subprocess.run(get_sa_cmd, shell=True, capture_output=True, text=True).stdout
         
-        sas = json.loads(sa_list)
+        sas_response = json.loads(sa_list)
+        sas = sas_response.get('serviceAccounts', [])
         sa_id = next((sa['id'] for sa in sas if sa['name'] == 'terraform-provisioner'), None)
         
         if not sa_id:
