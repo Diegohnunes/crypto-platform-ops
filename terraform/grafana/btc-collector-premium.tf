@@ -29,63 +29,110 @@ resource "grafana_dashboard" "btc_collector_premium" {
           mode = "html"
           content = <<-HTML
             <style>
-              @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.5; }
+              /* Fonte Tecnológica */
+              @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+
+              /* --- CSS GLOBAL (Fundo da Página Inteira) --- */
+              .main-view, .dashboard-page, .dashboard-container {
+                background: radial-gradient(circle at 50% 0%, #1a202c 0%, #0b0c10 100%) !important;
+              }
+              
+              /* Grade de fundo sutil */
+              .dashboard-container::before {
+                content: "";
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background-image: 
+                  linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+                background-size: 40px 40px;
+                pointer-events: none;
+                z-index: 0;
+              }
+
+              /* Remove bordas do painel do Grafana para o Header flutuar */
+              div[data-panel-id] .panel-container {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+
+              /* Animação do ponto verde */
+              @keyframes pulse-ring {
+                0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+                70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
               }
             </style>
+
+            <!-- CONTAINER DO HEADER -->
             <div style="
-              background: linear-gradient(135deg, rgba(30, 40, 60, 0.95) 0%, rgba(20, 30, 48, 0.95) 100%);
-              border: 1px solid rgba(100, 150, 255, 0.3);
-              border-radius: 12px;
-              padding: 25px 35px;
-              box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-              backdrop-filter: blur(10px);
-              -webkit-backdrop-filter: blur(10px);
-              margin: 10px;
-              height: 100%;
+              width: 100%;
+              min-height: 80px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              background: rgba(20, 30, 48, 0.7); /* Fundo semi-transparente */
+              backdrop-filter: blur(12px); /* Efeito de vidro */
+              border-bottom: 1px solid rgba(100, 150, 255, 0.2); /* Borda inferior sutil */
+              border-radius: 6px;
+              padding: 0 30px;
+              box-sizing: border-box;
+              font-family: 'Rajdhani', sans-serif;
+              box-shadow: 0 10px 20px rgba(0,0,0,0.3);
             ">
-              <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
-                <div>
+
+              <!-- LADO ESQUERDO: Títulos -->
+              <div style="display: flex; flex-direction: column; justify-content: center;">
                   <h1 style="
                     margin: 0;
                     font-size: 32px;
                     font-weight: 700;
-                    background: linear-gradient(90deg, #64B5F6 0%, #42A5F5 50%, #2196F3 100%);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
+                    color: #FFFFFF; /* Branco Sólido */
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    text-shadow: 0 0 15px rgba(100, 181, 246, 0.4); /* Brilho azulado leve */
+                    line-height: 1.2;
+                  ">BTC Collector</h1>
+                
+                <div style="
+                  display: flex; 
+                  align-items: center; 
+                  gap: 10px; 
+                ">
+                  <span style="
+                    font-size: 14px; 
+                    color: #94a3b8; 
+                    font-weight: 500; 
                     letter-spacing: 1px;
-                  ">BTC Collector - Application Performance Monitoring</h1>
-                  <p style="
-                    margin: 10px 0 0 0;
-                    color: rgba(255, 255, 255, 0.7);
-                    font-size: 15px;
-                    font-weight: 400;
-                  ">Real-time metrics &amp; observability dashboard • Powered by Prometheus &amp; Grafana</p>
+                  ">APPLICATION MONITORING</span>
                 </div>
+              </div>
+
+              <!-- LADO DIREITO: Status -->
+              <div style="display: flex; align-items: center; gap: 20px;">
                 <div style="
                   display: flex;
                   align-items: center;
-                  gap: 12px;
-                  padding: 14px 26px;
-                  background: rgba(76, 175, 80, 0.15);
-                  border: 1px solid rgba(76, 175, 80, 0.4);
-                  border-radius: 8px;
+                  gap: 10px;
+                  padding: 8px 20px;
+                  background: rgba(16, 185, 129, 0.1);
+                  border: 1px solid rgba(16, 185, 129, 0.3);
+                  border-radius: 4px;
                 ">
                   <div style="
-                    width: 12px;
-                    height: 12px;
+                    width: 8px;
+                    height: 8px;
                     border-radius: 50%;
-                    background: #4CAF50;
-                    box-shadow: 0 0 12px #4CAF50;
-                    animation: pulse 2s infinite;
+                    background: #10B981;
+                    animation: pulse-ring 2s infinite;
                   "></div>
                   <span style="
-                    color: #4CAF50;
-                    font-weight: 600;
-                    font-size: 17px;
-                    letter-spacing: 0.5px;
-                  ">SYSTEM OPERATIONAL</span>
+                    color: #10B981;
+                    font-weight: 700;
+                    font-size: 16px;
+                    letter-spacing: 1px;
+                  ">SYSTEM ONLINE</span>
                 </div>
               </div>
             </div>

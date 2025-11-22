@@ -163,8 +163,25 @@ spec:
             if line:
                 print(f"   {line}")
     except:
-        print(f"   Pod took longer than expected, but deployment is in progress")
-        print(f"   Check status with: kubectl get pods -n {namespace}")
+        print(f\"   Pod took longer than expected, but deployment is in progress\")
+        print(f\"   Check status with: kubectl get pods -n {namespace}\")
+
+
+    print(f"\nStep 11/11: Creating Grafana dashboard via Terraform...")
+    terraform_dir = os.path.join(base_dir, "terraform", "grafana")
+    dashboard_file = os.path.join(terraform_dir, f"{name}.tf")
+    
+    # Generate dashboard Terraform file
+    try:
+        generate_file(env, "dashboard.tf.j2", terraform_dir, f"{name}.tf", context)
+        
+        # Run terraform apply
+        run_command("terraform apply -auto-approve", cwd=terraform_dir)
+        print(f"   Dashboard created successfully!")
+        print(f"   Access at: http://localhost:3000/d/{name}-apm")
+    except Exception as e:
+        print(f"   Warning: Dashboard creation failed: {e}")
+        print(f"   Service is operational, but manual dashboard setup may be needed")
 
 
     print(f"\n{'='*60}")
@@ -178,6 +195,7 @@ spec:
     print(f"   • Code: apps/{name}/main.go")
     print(f"   • Manifests: gitops/manifests/{name}/")
     print(f"   • ArgoCD: gitops/apps/{name}.yaml")
+    print(f"   • Dashboard: http://localhost:3000/d/{name}-apm")
     
     print(f"\nUseful commands:")
     print(f"   kubectl get pods -n {namespace}")

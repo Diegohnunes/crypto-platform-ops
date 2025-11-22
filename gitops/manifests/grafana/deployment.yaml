@@ -56,6 +56,8 @@ spec:
             secretKeyRef:
               name: grafana-admin
               key: admin-password
+        - name: GF_PANELS_DISABLE_SANITIZE_HTML
+          value: "true"
         - name: GF_PATHS_PROVISIONING
           value: /etc/grafana/provisioning
         - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
